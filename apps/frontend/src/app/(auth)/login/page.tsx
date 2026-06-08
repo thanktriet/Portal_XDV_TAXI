@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuthStore } from '@/stores/auth.store'
 
@@ -9,8 +9,20 @@ export default function LoginPage() {
   const login = useAuthStore((s) => s.login)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [rememberMe, setRememberMe] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+
+  // Load saved credentials
+  useEffect(() => {
+    const saved = localStorage.getItem('xdv_remember')
+    if (saved) {
+      const { email: savedEmail, password: savedPassword } = JSON.parse(saved)
+      setEmail(savedEmail)
+      setPassword(savedPassword)
+      setRememberMe(true)
+    }
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -18,6 +30,13 @@ export default function LoginPage() {
     setLoading(true)
 
     try {
+      // Save or clear credentials
+      if (rememberMe) {
+        localStorage.setItem('xdv_remember', JSON.stringify({ email, password }))
+      } else {
+        localStorage.removeItem('xdv_remember')
+      }
+
       await login(email, password)
       router.push('/')
     } catch (err: any) {
@@ -82,6 +101,19 @@ export default function LoginPage() {
               />
             </div>
 
+            <div className="flex items-center">
+              <input
+                id="remember-me"
+                type="checkbox"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+                className="w-4 h-4 rounded border-slate-300 dark:border-slate-600 text-primary focus:ring-primary/20 cursor-pointer"
+              />
+              <label htmlFor="remember-me" className="ml-2 text-sm text-slate-600 dark:text-slate-400 cursor-pointer">
+                Ghi nhớ tài khoản
+              </label>
+            </div>
+
             <button
               type="submit"
               disabled={loading}
@@ -92,7 +124,7 @@ export default function LoginPage() {
           </form>
 
           <p className="text-center text-xs text-slate-400 mt-6">
-            © 2024 XDV Taxi. All rights reserved.
+            © 2026 XDV Taxi. All rights reserved.
           </p>
         </div>
       </div>
