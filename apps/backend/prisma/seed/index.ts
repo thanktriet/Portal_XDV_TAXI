@@ -11,7 +11,7 @@ async function main() {
     'users', 'branches', 'vehicles', 'workshop_jobs',
     'repair_orders', 'parts', 'technicians', 'fleet_costs',
     'fleet_incidents', 'maintenance', 'notifications', 'audit_logs',
-    'part_transfers',
+    'part_transfers', 'maintenance_plans',
   ];
   const actions = ['create', 'read', 'update', 'delete', 'approve', 'transfer'];
 

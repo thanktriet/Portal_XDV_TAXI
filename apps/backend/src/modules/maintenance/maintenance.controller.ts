@@ -35,21 +35,21 @@ export class MaintenanceController {
   }
 
   @Post('plans')
-  @RequirePermissions('maintenance:create')
+  @RequirePermissions('maintenance_plans:create')
   @ApiOperation({ summary: 'Tạo kế hoạch bảo dưỡng' })
   createPlan(@Body() dto: CreateMaintenancePlanDto) {
     return this.service.createPlan(dto);
   }
 
   @Patch('plans/:id')
-  @RequirePermissions('maintenance:update')
+  @RequirePermissions('maintenance_plans:update')
   @ApiOperation({ summary: 'Cập nhật kế hoạch bảo dưỡng' })
   updatePlan(@Param('id') id: string, @Body() dto: UpdateMaintenancePlanDto) {
     return this.service.updatePlan(id, dto);
   }
 
   @Delete('plans/:id')
-  @RequirePermissions('maintenance:update')
+  @RequirePermissions('maintenance_plans:delete')
   @ApiOperation({ summary: 'Xóa / vô hiệu kế hoạch bảo dưỡng' })
   deletePlan(@Param('id') id: string) {
     return this.service.deletePlan(id);
