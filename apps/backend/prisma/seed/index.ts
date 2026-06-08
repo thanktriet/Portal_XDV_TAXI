@@ -505,7 +505,7 @@ async function main() {
           entryReason: jd.entryReason,
           status: jd.status,
           advisorId: advisorUser.id,
-          isWarranty: false,
+          jobType: 'REPAIR',
           completedAt: ['COMPLETED', 'DELIVERED'].includes(jd.status) ? new Date() : null,
           deliveredAt: jd.status === 'DELIVERED' ? new Date() : null,
         },
