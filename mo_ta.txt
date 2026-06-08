@@ -1,0 +1,492 @@
+# Fleet & Workshop Management System (Taxi + Service Center)
+
+Bạn là Kiến trúc sư phần mềm Senior Fullstack.
+
+Hãy xây dựng một hệ thống Web Portal Enterprise cho doanh nghiệp vận hành Taxi điện và Xưởng Dịch vụ bảo dưỡng xe điện VinFast.
+
+## Công nghệ bắt buộc
+
+### Backend
+
+* Node.js 22+
+* NestJS
+* PostgreSQL 16
+* Prisma ORM
+* JWT Authentication
+* RBAC Permission
+* Redis Cache
+* Bull Queue
+* Swagger API
+
+### Frontend
+
+* NextJS 15
+* TypeScript
+* TailwindCSS
+* Shadcn/UI
+* Tanstack Table
+* Recharts
+* React Query
+* Zustand
+
+### DevOps
+
+* Docker
+* Docker Compose
+* Nginx
+* PM2
+* GitHub Actions CI/CD
+
+---
+
+# Mục tiêu hệ thống
+
+Xây dựng Portal quản trị tập trung gồm 2 khối:
+
+## 1. Xưởng Dịch Vụ
+
+Quản lý toàn bộ xe đang nằm xưởng.
+
+### Dashboard
+
+Hiển thị:
+
+* Tổng xe trong xưởng
+* Đang sửa chữa
+* Chờ phụ tùng
+* Chờ nghiệm thu
+* Hoàn thành
+* Xe nằm xưởng quá hạn
+* Xe bảo hành
+* Xe sửa chữa tính phí
+
+Biểu đồ:
+
+* Xe theo trạng thái
+* Chi phí sửa chữa
+* Phụ tùng sử dụng
+* Doanh thu dịch vụ
+
+---
+
+## Quản lý xe trong xưởng
+
+Thông tin:
+
+* Biển số
+* Số VIN
+* Loại xe
+* Chủ xe
+* Ngày tiếp nhận
+* ODO hiện tại
+* Tình trạng xe
+* Nguyên nhân vào xưởng
+* Cố vấn dịch vụ
+* Kỹ thuật viên phụ trách
+
+Workflow:
+
+Tiếp nhận
+→ Chẩn đoán
+→ Báo giá
+→ Duyệt sửa chữa
+→ Chờ phụ tùng
+→ Đang sửa
+→ Kiểm tra chất lượng
+→ Bàn giao
+
+---
+
+## Quản lý phụ tùng
+
+Thông tin:
+
+* Mã phụ tùng
+* Tên phụ tùng
+* Nhóm phụ tùng
+* Tồn kho
+* Giá nhập
+* Giá xuất
+* Nhà cung cấp
+
+Theo dõi:
+
+* Nhập kho
+* Xuất kho
+* Điều chuyển
+* Hoàn trả
+
+---
+
+## Chuyển đổi phụ tùng giữa xe
+
+Tính năng đặc biệt.
+
+Ví dụ:
+
+Xe A đang chờ phụ tùng.
+
+Cho phép lấy phụ tùng từ:
+
+* Xe B
+* Xe C
+
+và ghi nhận:
+
+* Xe nguồn
+* Xe nhận
+* Phụ tùng
+* Người duyệt
+* Lý do
+
+Lưu toàn bộ lịch sử.
+
+Audit log bắt buộc.
+
+---
+
+## Theo dõi ODO
+
+Lưu lịch sử:
+
+* ODO hiện tại
+* ODO lần trước
+* Chênh lệch
+
+Tự động tính:
+
+* Km chạy/ngày
+* Km chạy/tháng
+* Dự báo thời gian bảo dưỡng
+
+---
+
+## Bảo dưỡng định kỳ
+
+Thiết lập:
+
+* 1.000 km
+* 5.000 km
+* 10.000 km
+* 20.000 km
+* 40.000 km
+* 80.000 km
+
+Cảnh báo:
+
+Màu xanh:
+
+> còn >1000km
+
+Màu vàng:
+
+> còn <1000km
+
+Màu đỏ:
+
+> quá hạn
+
+---
+
+## Quản lý lệnh sửa chữa (RO)
+
+Repair Order:
+
+* Mã RO
+* Ngày mở RO
+* Xe
+* ODO
+* Nội dung sửa chữa
+* Công việc
+* Phụ tùng
+* Chi phí
+
+---
+
+## Quản lý kỹ thuật viên
+
+Thông tin:
+
+* Tên
+* Chức danh
+* Bậc tay nghề
+* Chuyên môn
+
+Theo dõi:
+
+* Giờ công
+* Hiệu suất
+* Doanh thu công lao động
+
+---
+
+# 2. Quản lý Đội Xe Taxi
+
+---
+
+## Dashboard Taxi
+
+Hiển thị:
+
+* Tổng xe
+* Xe hoạt động
+* Xe bảo dưỡng
+* Xe ngừng hoạt động
+* Xe lỗi
+* Xe sắp bảo dưỡng
+
+Biểu đồ:
+
+* Tình trạng đội xe
+* Chi phí vận hành
+* Chi phí bảo dưỡng
+* Tỷ lệ sử dụng
+
+---
+
+## Quản lý xe
+
+Thông tin:
+
+* Biển số
+* VIN
+* Model
+* Năm sản xuất
+* Ngày đăng ký
+* Tài xế
+* ODO
+
+Trạng thái:
+
+* Hoạt động
+* Nghỉ
+* Bảo dưỡng
+* Tai nạn
+* Thanh lý
+
+---
+
+## Theo dõi bảo dưỡng
+
+Hiển thị:
+
+* Bảo dưỡng gần nhất
+* Lần bảo dưỡng tiếp theo
+* Km còn lại
+
+Tự động đồng bộ dữ liệu từ Xưởng Dịch vụ.
+
+---
+
+## Quản lý chi phí
+
+Theo xe:
+
+* Điện năng
+* Lốp
+* Phanh
+* Bảo hiểm
+* Bảo dưỡng
+* Sửa chữa
+* Tai nạn
+
+Dashboard tổng hợp.
+
+---
+
+## Quản lý sự cố
+
+Tài xế tạo ticket:
+
+* Hình ảnh
+* Video
+* Mô tả lỗi
+
+Workflow:
+
+Mới
+→ Đã tiếp nhận
+→ Đang xử lý
+→ Hoàn thành
+
+---
+
+# Cảnh báo thông minh
+
+Notification Center
+
+Cảnh báo:
+
+* Xe sắp bảo dưỡng
+* Xe quá hạn bảo dưỡng
+* Xe nằm xưởng > 7 ngày
+* Xe chờ phụ tùng
+* Phụ tùng sắp hết
+* Xe lỗi nhiều lần
+
+Gửi:
+
+* In-App
+* Email
+* Telegram
+
+---
+
+# Phân quyền
+
+SUPER ADMIN
+
+* Toàn quyền
+
+GIAM_DOC_HAU_MAI
+
+* Xem toàn hệ thống
+
+QUAN_LY_XUONG
+
+* Quản lý xưởng
+
+CO_VAN_DICH_VU
+
+* Tạo RO
+
+KY_THUAT_VIEN
+
+* Cập nhật công việc
+
+QUAN_LY_DOI_XE
+
+* Quản lý taxi
+
+DIEU_HANH
+
+* Xem đội xe
+
+TAI_XE
+
+* Báo sự cố
+
+---
+
+# Database Design
+
+Thiết kế PostgreSQL chuẩn 3NF.
+
+Bao gồm:
+
+users
+roles
+permissions
+
+vehicles
+
+vehicle_odo_logs
+
+workshop_jobs
+
+repair_orders
+
+repair_order_items
+
+parts
+
+part_transactions
+
+part_transfers
+
+maintenance_plans
+
+maintenance_records
+
+technicians
+
+fleet_costs
+
+fleet_incidents
+
+notifications
+
+audit_logs
+
+files
+
+activity_logs
+
+Thiết kế đầy đủ:
+
+* ERD
+* Prisma Schema
+* Migration
+* Seed Data
+
+---
+
+# Dashboard UI
+
+Thiết kế giao diện hiện đại giống:
+
+* VinFast
+* Tesla Fleet
+* SAP Fiori
+* Odoo Enterprise
+
+Theme:
+
+Primary:
+#0055FF
+
+Success:
+#00C853
+
+Warning:
+#FF9800
+
+Danger:
+#F44336
+
+Background:
+#F8FAFC
+
+Sidebar trái cố định.
+
+Header trên cùng.
+
+Responsive.
+
+Dark Mode.
+
+---
+
+# KPI Dashboard
+
+## Xưởng
+
+* Xe trong xưởng
+* Xe chờ phụ tùng
+* RO mở
+* Doanh thu dịch vụ
+* Hiệu suất kỹ thuật viên
+
+## Taxi
+
+* Xe hoạt động
+* Xe bảo dưỡng
+* Chi phí/km
+* Xe sắp bảo dưỡng
+* MTBF
+* MTTR
+
+---
+
+Tạo:
+
+1. Kiến trúc hệ thống hoàn chỉnh
+2. PostgreSQL schema đầy đủ
+3. Prisma ORM schema
+4. Backend NestJS APIs
+5. Frontend NextJS UI
+6. Dashboard mockup
+7. Docker deployment
+8. API Documentation
+9. Seed dữ liệu mẫu 500 xe taxi và 1000 RO
+10. Source code production-ready
