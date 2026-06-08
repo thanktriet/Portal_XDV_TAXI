@@ -15,8 +15,7 @@ async function bootstrap() {
     'http://192.168.1.14:3000',
   ];
   app.enableCors({
-    origin: (origin, callback) => {
-      // Allow requests with no origin (mobile apps, curl, etc.)
+    origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
       if (!origin || allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
