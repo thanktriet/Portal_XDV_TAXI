@@ -3,16 +3,22 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
-import { Building2, Users, Settings } from 'lucide-react'
+import { Building2, Users, Settings, Shield } from 'lucide-react'
 import { PushNotificationToggle } from '@/components/settings/push-notification-toggle'
-
-const tabs = [
-  { label: 'Chi nhánh', href: '/settings/branches', icon: Building2 },
-  { label: 'Người dùng', href: '/settings/users', icon: Users },
-]
+import { useAuthStore } from '@/stores/auth.store'
 
 export default function SettingsPage() {
   const pathname = usePathname()
+  const { user } = useAuthStore()
+  const isSuperAdmin = user?.role === 'SUPER_ADMIN'
+
+  const tabs = [
+    { label: 'Chi nhánh', href: '/settings/branches', icon: Building2, description: 'Quản lý các chi nhánh' },
+    { label: 'Người dùng', href: '/settings/users', icon: Users, description: 'Quản lý tài khoản người dùng' },
+    ...(isSuperAdmin
+      ? [{ label: 'Phân quyền', href: '/settings/roles', icon: Shield, description: 'Gán quyền cho từng role' }]
+      : []),
+  ]
 
   return (
     <div className="space-y-6">
@@ -21,7 +27,7 @@ export default function SettingsPage() {
         <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Cài đặt</h1>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-xl">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 max-w-3xl">
         {tabs.map((tab) => (
           <Link
             key={tab.href}
@@ -38,9 +44,7 @@ export default function SettingsPage() {
             </div>
             <div>
               <p className="font-medium text-slate-900 dark:text-white">{tab.label}</p>
-              <p className="text-xs text-slate-500 mt-0.5">
-                {tab.label === 'Chi nhánh' ? 'Quản lý các chi nhánh' : 'Quản lý tài khoản người dùng'}
-              </p>
+              <p className="text-xs text-slate-500 mt-0.5">{tab.description}</p>
             </div>
           </Link>
         ))}

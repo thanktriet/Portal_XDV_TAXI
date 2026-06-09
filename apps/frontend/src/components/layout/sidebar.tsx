@@ -25,6 +25,8 @@ import {
   Bell,
   ArrowRightLeft,
   Upload,
+  Shield,
+  X,
 } from 'lucide-react'
 
 interface NavItem {
@@ -34,7 +36,7 @@ interface NavItem {
   roles?: string[]
 }
 
-const navigation: { section: string; items: NavItem[] }[] = [
+export const navigation: { section: string; items: NavItem[] }[] = [
   {
     section: 'Tổng quan',
     items: [
@@ -80,6 +82,7 @@ const navigation: { section: string; items: NavItem[] }[] = [
     items: [
       { label: 'Chi nhánh', href: '/settings/branches', icon: Building2, roles: ['SUPER_ADMIN'] },
       { label: 'Người dùng', href: '/settings/users', icon: Users, roles: ['SUPER_ADMIN'] },
+      { label: 'Phân quyền', href: '/settings/roles', icon: Shield, roles: ['SUPER_ADMIN'] },
       { label: 'Cấu hình', href: '/settings', icon: Settings, roles: ['SUPER_ADMIN'] },
     ],
   },
@@ -93,7 +96,12 @@ function getSectionTheme(section: string, pathname: string) {
 
 const FLEET_APPROVAL_ROLES = ['SUPER_ADMIN', 'GIAM_DOC_HAU_MAI', 'QUAN_LY_DOI_XE']
 
-export function Sidebar() {
+interface SidebarProps {
+  mobileOpen?: boolean
+  onMobileClose?: () => void
+}
+
+export function Sidebar({ mobileOpen = false, onMobileClose }: SidebarProps) {
   const pathname = usePathname()
   const user = useAuthStore((s) => s.user)
 
@@ -134,10 +142,10 @@ export function Sidebar() {
   const LogoIcon = isFleet ? Car : isWorkshop ? Wrench : Car
   const logoBg = isFleet ? 'bg-emerald-600' : 'bg-primary'
 
-  return (
-    <aside className="fixed left-0 top-0 z-40 h-screen w-64 bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 hidden lg:block overflow-y-auto">
+  const sidebarContent = (
+    <>
       {/* Logo */}
-      <div className="flex items-center h-16 px-6 border-b border-slate-200 dark:border-slate-700">
+      <div className="flex items-center justify-between h-16 px-6 border-b border-slate-200 dark:border-slate-700">
         <div className="flex items-center gap-3">
           <div className={cn('w-8 h-8 rounded-lg flex items-center justify-center transition-colors', logoBg)}>
             <LogoIcon className="w-5 h-5 text-white" />
@@ -146,6 +154,15 @@ export function Sidebar() {
             {logoLabel}
           </span>
         </div>
+        {/* Close button — mobile only */}
+        {onMobileClose && (
+          <button
+            onClick={onMobileClose}
+            className="lg:hidden p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-500"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        )}
       </div>
 
       {/* Navigation */}
@@ -167,6 +184,7 @@ export function Sidebar() {
                   <li key={item.href}>
                     <Link
                       href={item.href}
+                      onClick={onMobileClose}
                       className={cn(
                         'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
                         isActive(item.href)
@@ -189,6 +207,30 @@ export function Sidebar() {
           )
         })}
       </nav>
-    </aside>
+    </>
+  )
+
+  return (
+    <>
+      {/* Desktop sidebar */}
+      <aside className="fixed left-0 top-0 z-40 h-screen w-64 bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 hidden lg:block overflow-y-auto">
+        {sidebarContent}
+      </aside>
+
+      {/* Mobile drawer overlay */}
+      {mobileOpen && (
+        <div className="fixed inset-0 z-50 lg:hidden">
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm"
+            onClick={onMobileClose}
+          />
+          {/* Drawer */}
+          <aside className="fixed left-0 top-0 h-screen w-72 bg-white dark:bg-slate-800 shadow-xl overflow-y-auto animate-slide-in-left">
+            {sidebarContent}
+          </aside>
+        </div>
+      )}
+    </>
   )
 }

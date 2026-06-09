@@ -12,6 +12,7 @@ import { FleetModule } from './modules/fleet/fleet.module';
 import { MaintenanceModule } from './modules/maintenance/maintenance.module';
 import { TechniciansModule } from './modules/technicians/technicians.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
+import { RolesModule } from './modules/roles/roles.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
     MaintenanceModule,
     TechniciansModule,
     NotificationsModule,
+    RolesModule,
   ],
 })
 export class AppModule {}

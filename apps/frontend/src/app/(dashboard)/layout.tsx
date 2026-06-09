@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { useAuthStore } from '@/stores/auth.store'
 import { Sidebar } from '@/components/layout/sidebar'
@@ -22,6 +22,12 @@ export default function DashboardLayout({
   const pathname = usePathname()
   const { isAuthenticated, isLoading, fetchProfile } = useAuthStore()
   const themeClass = useThemeClass(pathname)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+
+  // Close mobile menu on route change
+  useEffect(() => {
+    setMobileMenuOpen(false)
+  }, [pathname])
 
   useEffect(() => {
     fetchProfile()
@@ -45,10 +51,10 @@ export default function DashboardLayout({
 
   return (
     <div className={cn('min-h-screen bg-slate-50 dark:bg-slate-900', themeClass)}>
-      <Sidebar />
+      <Sidebar mobileOpen={mobileMenuOpen} onMobileClose={() => setMobileMenuOpen(false)} />
       <div className="lg:ml-64">
-        <Header />
-        <main className="p-6">{children}</main>
+        <Header onMenuToggle={() => setMobileMenuOpen(true)} />
+        <main className="p-4 sm:p-6">{children}</main>
       </div>
     </div>
   )

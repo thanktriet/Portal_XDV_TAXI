@@ -88,11 +88,15 @@ async function main() {
     });
   }
 
-  // QUAN_LY_DOI_XE - fleet related
+  // QUAN_LY_DOI_XE - fleet related + read workshop/parts history
   const quanLyDoiXe = createdRoles.find((r) => r.code === 'QUAN_LY_DOI_XE');
   const fleetResources = ['vehicles', 'fleet_costs', 'fleet_incidents', 'maintenance'];
   const fleetPerms = permissions.filter(
-    (p) => fleetResources.includes(p.resource),
+    (p) =>
+      fleetResources.includes(p.resource) ||
+      (p.resource === 'workshop_jobs' && p.action === 'read') ||
+      (p.resource === 'part_transfers' && p.action === 'read') ||
+      (p.resource === 'parts' && p.action === 'read'),
   );
   for (const perm of fleetPerms) {
     await prisma.rolePermission.upsert({
