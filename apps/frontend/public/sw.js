@@ -1,4 +1,4 @@
-const CACHE_NAME = 'xdv-taxi-v1';
+const CACHE_NAME = 'xdv-taxi-v2';
 const STATIC_ASSETS = [
   '/',
   '/manifest.json',
