@@ -339,6 +339,7 @@ export default function VehicleDetailPage() {
                           <th className="text-left py-2 font-medium text-slate-500">Thời gian</th>
                           <th className="text-right py-2 font-medium text-slate-500">ODO</th>
                           <th className="text-right py-2 font-medium text-slate-500">+Km</th>
+                          <th className="text-left py-2 font-medium text-slate-500 pl-4">Người nhập</th>
                           <th className="text-left py-2 font-medium text-slate-500 pl-4">Nguồn</th>
                         </tr>
                       </thead>
@@ -348,6 +349,7 @@ export default function VehicleDetailPage() {
                             <td className="py-2.5 text-slate-600 dark:text-slate-300">{formatDateTime(log.recordedAt)}</td>
                             <td className="py-2.5 text-right font-semibold text-slate-900 dark:text-white">{formatNumber(log.odo)} km</td>
                             <td className="py-2.5 text-right text-emerald-600 dark:text-emerald-400 font-medium">+{formatNumber(log.delta)} km</td>
+                            <td className="py-2.5 text-slate-600 dark:text-slate-300 text-xs pl-4">{log.user?.fullName || '—'}</td>
                             <td className="py-2.5 text-slate-400 text-xs pl-4 capitalize">{log.source}</td>
                           </tr>
                         ))}

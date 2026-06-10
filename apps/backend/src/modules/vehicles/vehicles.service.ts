@@ -95,7 +95,7 @@ export class VehiclesService {
       include: {
         model: true,
         branch: true,
-        odoLogs: { take: 10, orderBy: { recordedAt: 'desc' } },
+        odoLogs: { take: 10, orderBy: { recordedAt: 'desc' }, include: { user: { select: { id: true, fullName: true } } } },
         maintenanceRecords: {
           take: 5,
           orderBy: { createdAt: 'desc' },
@@ -171,6 +171,7 @@ export class VehiclesService {
         skip,
         take: limit,
         orderBy: { recordedAt: 'desc' },
+        include: { user: { select: { id: true, fullName: true } } },
       }),
       this.prisma.vehicleOdoLog.count({ where: { vehicleId } }),
     ]);
