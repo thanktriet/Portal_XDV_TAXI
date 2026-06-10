@@ -823,6 +823,241 @@ async function main() {
   }
   console.log(`✅ ${ptbDefs.length} part transfer batches created`);
 
+  // 17. Parts (phụ tùng tồn kho)
+  const partDefs = [
+    { code: 'PT-001', name: 'Dầu động cơ 5W-30 (4L)', categoryCode: 'OTHER', unit: 'bình', costPrice: 280000, sellPrice: 350000, supplier: 'VinFast' },
+    { code: 'PT-002', name: 'Lọc dầu động cơ', categoryCode: 'OTHER', unit: 'cái', costPrice: 65000, sellPrice: 85000, supplier: 'VinFast' },
+    { code: 'PT-003', name: 'Lọc gió động cơ', categoryCode: 'OTHER', unit: 'cái', costPrice: 90000, sellPrice: 120000, supplier: 'VinFast' },
+    { code: 'PT-004', name: 'Lọc gió điều hòa cabin', categoryCode: 'OTHER', unit: 'cái', costPrice: 70000, sellPrice: 95000, supplier: 'VinFast' },
+    { code: 'PT-005', name: 'Bugi (bộ 4)', categoryCode: 'ELECTRICAL', unit: 'bộ', costPrice: 380000, sellPrice: 480000, supplier: 'NGK' },
+    { code: 'PT-006', name: 'Dầu phanh DOT 4 (1L)', categoryCode: 'BRAKE', unit: 'chai', costPrice: 75000, sellPrice: 95000, supplier: 'Bosch' },
+    { code: 'PT-007', name: 'Má phanh trước (bộ)', categoryCode: 'BRAKE', unit: 'bộ', costPrice: 450000, sellPrice: 600000, supplier: 'Brembo' },
+    { code: 'PT-008', name: 'Má phanh sau (bộ)', categoryCode: 'BRAKE', unit: 'bộ', costPrice: 380000, sellPrice: 500000, supplier: 'Brembo' },
+    { code: 'PT-009', name: 'Lốp 215/55R17', categoryCode: 'TIRE', unit: 'cái', costPrice: 1800000, sellPrice: 2200000, supplier: 'Michelin' },
+    { code: 'PT-010', name: 'Nước làm mát (4L)', categoryCode: 'OTHER', unit: 'bình', costPrice: 90000, sellPrice: 120000, supplier: 'VinFast' },
+    { code: 'PT-011', name: 'Chổi gạt nước (bộ)', categoryCode: 'BODY', unit: 'bộ', costPrice: 180000, sellPrice: 250000, supplier: 'Bosch' },
+    { code: 'PT-012', name: 'Ắc quy 12V 60Ah', categoryCode: 'BATTERY', unit: 'cái', costPrice: 1500000, sellPrice: 1900000, supplier: 'GS' },
+    { code: 'PT-013', name: 'Giảm chấn trước (cái)', categoryCode: 'SUSPENSION', unit: 'cái', costPrice: 2200000, sellPrice: 2800000, supplier: 'KYB' },
+    { code: 'PT-014', name: 'Giảm chấn sau (cái)', categoryCode: 'SUSPENSION', unit: 'cái', costPrice: 1800000, sellPrice: 2300000, supplier: 'KYB' },
+    { code: 'PT-015', name: 'Dầu hộp số tự động (4L)', categoryCode: 'OTHER', unit: 'bình', costPrice: 450000, sellPrice: 580000, supplier: 'VinFast' },
+    { code: 'PT-016', name: 'Đèn pha LED (bên trái)', categoryCode: 'ELECTRICAL', unit: 'cái', costPrice: 3500000, sellPrice: 4500000, supplier: 'VinFast' },
+    { code: 'PT-017', name: 'Đèn pha LED (bên phải)', categoryCode: 'ELECTRICAL', unit: 'cái', costPrice: 3500000, sellPrice: 4500000, supplier: 'VinFast' },
+    { code: 'PT-018', name: 'Gương chiếu hậu trái', categoryCode: 'BODY', unit: 'cái', costPrice: 1200000, sellPrice: 1600000, supplier: 'VinFast' },
+    { code: 'PT-019', name: 'Gương chiếu hậu phải', categoryCode: 'BODY', unit: 'cái', costPrice: 1200000, sellPrice: 1600000, supplier: 'VinFast' },
+    { code: 'PT-020', name: 'Bộ côn ly (clutch kit)', categoryCode: 'OTHER', unit: 'bộ', costPrice: 3800000, sellPrice: 4800000, supplier: 'VinFast' },
+  ];
+
+  const partCategories2 = await prisma.partCategory.findMany();
+  for (const pd of partDefs) {
+    const cat = partCategories2.find((c) => c.code === pd.categoryCode);
+    await prisma.part.upsert({
+      where: { code: pd.code },
+      update: {},
+      create: {
+        code: pd.code,
+        name: pd.name,
+        categoryId: cat!.id,
+        unit: pd.unit,
+        costPrice: pd.costPrice,
+        sellPrice: pd.sellPrice,
+        supplier: pd.supplier,
+      },
+    });
+  }
+  console.log(`✅ ${partDefs.length} parts created`);
+
+  // 18. Part Stocks (tồn kho tại xưởng)
+  const createdParts = await prisma.part.findMany();
+  const workshopBranch = createdBranches.find((b) => b.code === 'XW01')!;
+  for (const part of createdParts) {
+    const qty = Math.floor(Math.random() * 20) + 2;
+    await prisma.partStock.upsert({
+      where: { partId_branchId: { partId: part.id, branchId: workshopBranch.id } },
+      update: {},
+      create: {
+        partId: part.id,
+        branchId: workshopBranch.id,
+        quantity: qty,
+      },
+    });
+  }
+  console.log(`✅ Part stocks created for ${createdParts.length} parts`);
+
+  // 19. Technicians
+  const ktvUser = await prisma.user.findUnique({ where: { email: 'kythuatvien@xdv.vn' } });
+  if (ktvUser) {
+    await prisma.technician.upsert({
+      where: { userId: ktvUser.id },
+      update: {},
+      create: {
+        userId: ktvUser.id,
+        title: 'Kỹ thuật viên chính',
+        skillLevel: 4,
+        specialty: 'Hệ thống điện & pin',
+        branchId: workshopBranch.id,
+      },
+    });
+  }
+  // Thêm KTV từ user KTV đội xe
+  const ktvDoiXeUser = await prisma.user.findUnique({ where: { email: 'ktvdoixe@xdv.vn' } });
+  const rgBranch = createdBranches.find((b) => b.code === 'RG01')!;
+  if (ktvDoiXeUser) {
+    await prisma.technician.upsert({
+      where: { userId: ktvDoiXeUser.id },
+      update: {},
+      create: {
+        userId: ktvDoiXeUser.id,
+        title: 'KTV bảo dưỡng đội xe',
+        skillLevel: 3,
+        specialty: 'Bảo dưỡng định kỳ & lốp',
+        branchId: rgBranch.id,
+      },
+    });
+  }
+  console.log('✅ Technicians created');
+
+  // 20. Thêm nhiều Workshop Jobs hơn (nhiều trạng thái khác nhau)
+  const extraJobDefs = [
+    { code: 'WS-2025-000007', licensePlate: '68A-001.11', odoAtEntry: 12500, entryReason: 'Kiểm tra tiếng ồn hệ thống treo trước', status: 'DIAGNOSING' as const, planId: null },
+    { code: 'WS-2025-000008', licensePlate: '67A-001.11', odoAtEntry: 18000, entryReason: 'Bảo dưỡng định kỳ Cấp 2 — 10.000 km (đã trễ)', status: 'APPROVED' as const, planId: planCap2.id },
+    { code: 'WS-2025-000009', licensePlate: '65A-002.22', odoAtEntry: 17800, entryReason: 'Thay má phanh trước + sau, kiểm tra đĩa phanh', status: 'WAITING_PARTS' as const, planId: null },
+    { code: 'WS-2025-000010', licensePlate: '68A-003.33', odoAtEntry: 8800, entryReason: 'Cập nhật phần mềm ECU + kiểm tra hệ thống sạc', status: 'COMPLETED' as const, planId: null },
+    { code: 'WS-2025-000011', licensePlate: '94A-003.33', odoAtEntry: 12300, entryReason: 'Bảo dưỡng Cấp 2 — thay lọc gió + bugi', status: 'QUALITY_CHECK' as const, planId: planCap2.id },
+    { code: 'WS-2025-000012', licensePlate: '64A-001.11', odoAtEntry: 14200, entryReason: 'Xe bị rung tay lái khi chạy > 80km/h, cân bằng động', status: 'DELIVERED' as const, planId: null },
+    { code: 'WS-2025-000013', licensePlate: '68A-006.66', odoAtEntry: 15400, entryReason: 'Thay màn hình trung tâm (bảo hành VinFast)', status: 'IN_PROGRESS' as const, planId: null },
+    { code: 'WS-2025-000014', licensePlate: '67A-004.44', odoAtEntry: 11200, entryReason: 'Bảo dưỡng Cấp 2 + kiểm tra pin EV', status: 'RECEIVED' as const, planId: planCap2.id },
+  ];
+
+  for (const jd of extraJobDefs) {
+    const vehicle = vByPlate(jd.licensePlate);
+    const existing = await prisma.workshopJob.findUnique({ where: { code: jd.code } });
+    if (!existing) {
+      await prisma.workshopJob.create({
+        data: {
+          code: jd.code,
+          vehicleId: vehicle.id,
+          branchId: workshopBranch.id,
+          planId: jd.planId || null,
+          odoAtEntry: jd.odoAtEntry,
+          entryReason: jd.entryReason,
+          status: jd.status,
+          advisorId: advisorUser.id,
+          technicianId: ktvUser ? (await prisma.technician.findUnique({ where: { userId: ktvUser.id } }))?.id : undefined,
+          jobType: jd.planId ? 'MAINTENANCE' : 'REPAIR',
+          completedAt: ['COMPLETED', 'DELIVERED'].includes(jd.status) ? new Date() : null,
+          deliveredAt: jd.status === 'DELIVERED' ? new Date() : null,
+        },
+      });
+    }
+  }
+  console.log(`✅ ${extraJobDefs.length} extra workshop jobs created`);
+
+  // 21. Thêm nhiều Fleet Costs cho báo cáo
+  const extraCosts = [
+    { licensePlate: '68A-001.11', category: 'ELECTRICITY', amount: 790000,  description: 'Sạc điện tháng 4/2025', costDate: new Date('2025-04-15') },
+    { licensePlate: '68A-001.11', category: 'ELECTRICITY', amount: 810000,  description: 'Sạc điện tháng 3/2025', costDate: new Date('2025-03-15') },
+    { licensePlate: '68A-002.22', category: 'ELECTRICITY', amount: 880000,  description: 'Sạc điện tháng 4/2025', costDate: new Date('2025-04-15') },
+    { licensePlate: '68A-002.22', category: 'ELECTRICITY', amount: 850000,  description: 'Sạc điện tháng 3/2025', costDate: new Date('2025-03-15') },
+    { licensePlate: '67A-001.11', category: 'ELECTRICITY', amount: 820000,  description: 'Sạc điện tháng 4/2025', costDate: new Date('2025-04-15') },
+    { licensePlate: '67A-001.11', category: 'ELECTRICITY', amount: 790000,  description: 'Sạc điện tháng 3/2025', costDate: new Date('2025-03-15') },
+    { licensePlate: '65A-001.11', category: 'ELECTRICITY', amount: 920000,  description: 'Sạc điện tháng 4/2025', costDate: new Date('2025-04-15') },
+    { licensePlate: '65A-001.11', category: 'ELECTRICITY', amount: 880000,  description: 'Sạc điện tháng 3/2025', costDate: new Date('2025-03-15') },
+    { licensePlate: '65A-003.33', category: 'ELECTRICITY', amount: 680000,  description: 'Sạc điện tháng 5/2025', costDate: new Date('2025-05-15') },
+    { licensePlate: '64A-001.11', category: 'ELECTRICITY', amount: 780000,  description: 'Sạc điện tháng 4/2025', costDate: new Date('2025-04-15') },
+    { licensePlate: '94A-001.11', category: 'ELECTRICITY', amount: 720000,  description: 'Sạc điện tháng 4/2025', costDate: new Date('2025-04-15') },
+    { licensePlate: '94A-002.22', category: 'ELECTRICITY', amount: 830000,  description: 'Sạc điện tháng 5/2025', costDate: new Date('2025-05-15') },
+    { licensePlate: '68A-003.33', category: 'INSURANCE',   amount: 8500000, description: 'Bảo hiểm xe 2025',      costDate: new Date('2025-01-08') },
+    { licensePlate: '67A-003.33', category: 'INSURANCE',   amount: 8500000, description: 'Bảo hiểm xe 2025',      costDate: new Date('2025-01-12') },
+    { licensePlate: '65A-001.11', category: 'INSURANCE',   amount: 9200000, description: 'Bảo hiểm xe 2025',      costDate: new Date('2025-01-03') },
+    { licensePlate: '68A-008.88', category: 'MAINTENANCE', amount: 1630000, description: 'Bảo dưỡng Cấp 3 (20k km)', costDate: new Date('2025-03-10') },
+    { licensePlate: '67A-002.22', category: 'TIRE',        amount: 4400000, description: 'Thay 2 lốp sau',         costDate: new Date('2025-05-02') },
+    { licensePlate: '68A-006.66', category: 'BODY',        amount: 2800000, description: 'Sơn lại cánh cửa phải (trầy)', costDate: new Date('2025-04-22') },
+  ];
+
+  for (const cd of extraCosts) {
+    const vehicle = vByPlate(cd.licensePlate);
+    const exists = await prisma.fleetCost.findFirst({
+      where: { vehicleId: vehicle.id, category: cd.category as any, costDate: cd.costDate },
+    });
+    if (!exists) {
+      await prisma.fleetCost.create({
+        data: { vehicleId: vehicle.id, category: cd.category as any, amount: cd.amount, description: cd.description, costDate: cd.costDate, userId: adminUser.id },
+      });
+    }
+  }
+  console.log(`✅ ${extraCosts.length} extra fleet costs created`);
+
+  // 22. Thêm Maintenance Records cho nhiều xe hơn
+  const extraMaintRecords = [
+    { licensePlate: '68A-003.33', planId: planCap1.id, odoAtService: 5000, nextDueOdo: 10000, status: 'COMPLETED' },
+    { licensePlate: '68A-005.55', planId: planCap1.id, odoAtService: 5000, nextDueOdo: 10000, status: 'UPCOMING' },
+    { licensePlate: '68A-006.66', planId: planCap1.id, odoAtService: 5000, nextDueOdo: 10000, status: 'COMPLETED' },
+    { licensePlate: '68A-006.66', planId: planCap2.id, odoAtService: 10000, nextDueOdo: 20000, status: 'COMPLETED' },
+    { licensePlate: '68A-006.66', planId: planCap1.id, odoAtService: 15000, nextDueOdo: 20000, status: 'DUE_SOON' },
+    { licensePlate: '68A-008.88', planId: planCap1.id, odoAtService: 5000, nextDueOdo: 10000, status: 'COMPLETED' },
+    { licensePlate: '68A-008.88', planId: planCap2.id, odoAtService: 10000, nextDueOdo: 20000, status: 'COMPLETED' },
+    { licensePlate: '68A-008.88', planId: planCap3.id, odoAtService: 20000, nextDueOdo: 40000, status: 'COMPLETED' },
+    { licensePlate: '68A-008.88', planId: planCap1.id, odoAtService: 30000, nextDueOdo: 35000, status: 'OVERDUE' },
+    { licensePlate: '67A-001.11', planId: planCap1.id, odoAtService: 5000, nextDueOdo: 10000, status: 'COMPLETED' },
+    { licensePlate: '67A-001.11', planId: planCap2.id, odoAtService: 10000, nextDueOdo: 20000, status: 'DUE_SOON' },
+    { licensePlate: '94A-002.22', planId: planCap1.id, odoAtService: 5000, nextDueOdo: 10000, status: 'COMPLETED' },
+    { licensePlate: '65A-002.22', planId: planCap1.id, odoAtService: 5000, nextDueOdo: 10000, status: 'COMPLETED' },
+    { licensePlate: '65A-002.22', planId: planCap2.id, odoAtService: 10000, nextDueOdo: 20000, status: 'DUE_SOON' },
+    { licensePlate: '64A-001.11', planId: planCap1.id, odoAtService: 5000, nextDueOdo: 10000, status: 'COMPLETED' },
+    { licensePlate: '64A-001.11', planId: planCap2.id, odoAtService: 10000, nextDueOdo: 20000, status: 'DUE_SOON' },
+  ];
+
+  for (const mrd of extraMaintRecords) {
+    const vehicle = vByPlate(mrd.licensePlate);
+    const exists = await prisma.maintenanceRecord.findFirst({
+      where: { vehicleId: vehicle.id, planId: mrd.planId, odoAtService: mrd.odoAtService },
+    });
+    if (!exists) {
+      await prisma.maintenanceRecord.create({
+        data: {
+          vehicleId: vehicle.id,
+          planId: mrd.planId,
+          odoAtService: mrd.odoAtService,
+          nextDueOdo: mrd.nextDueOdo,
+          status: mrd.status as any,
+          serviceDate: mrd.status === 'COMPLETED' ? new Date(Date.now() - Math.random() * 90 * 86400000) : null,
+          cost: mrd.status === 'COMPLETED' ? (mrd.odoAtService <= 5000 ? 630000 : mrd.odoAtService <= 10000 ? 1200000 : 2800000) : null,
+        },
+      });
+    }
+  }
+  console.log(`✅ ${extraMaintRecords.length} extra maintenance records created`);
+
+  // 23. Thêm ODO logs cho các xe khác
+  const extraOdoLogs = [
+    { licensePlate: '68A-003.33', logs: [3000, 5000, 8800] },
+    { licensePlate: '68A-005.55', logs: [2000, 5100] },
+    { licensePlate: '68A-006.66', logs: [5000, 10000, 15400] },
+    { licensePlate: '67A-001.11', logs: [5000, 10000, 15000, 18100] },
+    { licensePlate: '67A-003.33', logs: [10000, 20000, 26000] },
+    { licensePlate: '65A-002.22', logs: [5000, 10000, 17800] },
+    { licensePlate: '64A-001.11', logs: [5000, 10000, 14200] },
+    { licensePlate: '94A-001.11', logs: [5000, 8900] },
+    { licensePlate: '94A-003.33', logs: [5000, 10000, 12300] },
+  ];
+  for (const entry of extraOdoLogs) {
+    const vehicle = vByPlate(entry.licensePlate);
+    let prev = 0;
+    for (const odo of entry.logs) {
+      const exists = await prisma.vehicleOdoLog.findFirst({ where: { vehicleId: vehicle.id, odo } });
+      if (!exists) {
+        await prisma.vehicleOdoLog.create({
+          data: {
+            vehicleId: vehicle.id, odo, previousOdo: prev, delta: odo - prev, source: 'manual', userId: adminUser.id,
+            recordedAt: new Date(Date.now() - (entry.logs[entry.logs.length - 1] - odo) * 3600000),
+          },
+        });
+      }
+      prev = odo;
+    }
+  }
+  console.log('✅ Extra ODO logs created');
+
   console.log('\n🎉 Seed completed successfully!');
   console.log('\n📋 Login credentials:');
   console.log('   Email: admin@xdv.vn');
