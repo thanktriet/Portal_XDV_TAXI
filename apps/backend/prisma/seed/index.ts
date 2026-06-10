@@ -877,7 +877,7 @@ async function main() {
       create: {
         partId: part.id,
         branchId: workshopBranch.id,
-        quantity: qty,
+        stockQty: qty,
       },
     });
   }
