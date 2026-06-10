@@ -158,10 +158,12 @@ async function main() {
 
   // 4. Branches
   const branches = [
-    { name: 'Xưởng Trung tâm',              code: 'XW01', type: 'WORKSHOP' as const, address: '1 Phạm Hùng, Hà Nội',                phone: '0241000001' },
-    { name: 'Đội xe Hà Nội - Cầu Giấy',     code: 'HN01', type: 'FLEET'    as const, address: '123 Cầu Giấy, Hà Nội',              phone: '0241001001' },
-    { name: 'Đội xe Hà Nội - Long Biên',     code: 'HN02', type: 'FLEET'    as const, address: '456 Nguyễn Văn Cừ, Long Biên',      phone: '0241001002' },
-    { name: 'Đội xe Hải Phòng',              code: 'HP01', type: 'FLEET'    as const, address: '789 Lạch Tray, Hải Phòng',          phone: '0225001001' },
+    { name: '2S Rạch Giá',              code: 'XW01', type: 'WORKSHOP' as const, address: '168 Nguyễn Trung Trực, Rạch Giá, Kiên Giang', phone: '02973 500 001' },
+    { name: 'Đội xe Rạch Giá',          code: 'RG01', type: 'FLEET'    as const, address: '56 Lạc Hồng, Rạch Giá, Kiên Giang',          phone: '02973 500 002' },
+    { name: 'Đội xe An Giang',          code: 'AG01', type: 'FLEET'    as const, address: '123 Trần Hưng Đạo, Long Xuyên, An Giang',     phone: '02963 500 001' },
+    { name: 'Đội xe Cần Thơ',           code: 'CT01', type: 'FLEET'    as const, address: '89 Nguyễn Văn Linh, Ninh Kiều, Cần Thơ',      phone: '02923 500 001' },
+    { name: 'Đội xe Vĩnh Long',         code: 'VL01', type: 'FLEET'    as const, address: '45 Phạm Thái Bường, TP Vĩnh Long',            phone: '02703 500 001' },
+    { name: 'Đội xe Bạc Liêu',          code: 'BL01', type: 'FLEET'    as const, address: '78 Trần Phú, TP Bạc Liêu',                    phone: '02913 500 001' },
   ];
 
   const createdBranches: any[] = [];
@@ -208,12 +210,15 @@ async function main() {
     { email: 'quanlyxuong@xdv.vn', fullName: 'Trần Văn Xưởng',    role: 'QUAN_LY_XUONG',   branch: 'XW01' },
     { email: 'covan@xdv.vn',       fullName: 'Lê Thị Cố Vấn',     role: 'CO_VAN_DICH_VU',  branch: 'XW01' },
     { email: 'kythuatvien@xdv.vn', fullName: 'Phạm Văn Kỹ Thuật', role: 'KY_THUAT_VIEN',   branch: 'XW01' },
-    { email: 'quanlydoixe@xdv.vn', fullName: 'Hoàng Văn Đội Xe',  role: 'QUAN_LY_DOI_XE',  branch: 'HN01' },
-    { email: 'ktvdoixe@xdv.vn',    fullName: 'Nguyễn Văn KTV Đội',role: 'KTV_DOI_XE',       branch: 'HN01' },
-    { email: 'dieuhanh@xdv.vn',    fullName: 'Vũ Thị Điều Hành',  role: 'DIEU_HANH',        branch: 'HN01' },
-    { email: 'taixe01@xdv.vn',     fullName: 'Đỗ Văn Tài Xế',     role: 'TAI_XE',           branch: 'HN01' },
-    { email: 'taixe02@xdv.vn', fullName: 'Bùi Văn Lái', role: 'TAI_XE', branch: 'HN02' },
-    { email: 'quanlyxuong2@xdv.vn', fullName: 'Ngô Văn Xưởng', role: 'QUAN_LY_XUONG', branch: 'HP01' },
+    { email: 'quanlydoixe@xdv.vn', fullName: 'Hoàng Văn Đội Xe',  role: 'QUAN_LY_DOI_XE',  branch: 'RG01' },
+    { email: 'ktvdoixe@xdv.vn',    fullName: 'Nguyễn Văn KTV Đội',role: 'KTV_DOI_XE',       branch: 'RG01' },
+    { email: 'dieuhanh@xdv.vn',    fullName: 'Vũ Thị Điều Hành',  role: 'DIEU_HANH',        branch: 'RG01' },
+    { email: 'taixe01@xdv.vn',     fullName: 'Đỗ Văn Tài Xế',     role: 'TAI_XE',           branch: 'RG01' },
+    { email: 'taixe02@xdv.vn', fullName: 'Bùi Văn Lái', role: 'TAI_XE', branch: 'AG01' },
+    { email: 'quanlydoixe2@xdv.vn', fullName: 'Ngô Văn Quản Lý', role: 'QUAN_LY_DOI_XE', branch: 'CT01' },
+    { email: 'taixe03@xdv.vn', fullName: 'Trần Văn Minh', role: 'TAI_XE', branch: 'CT01' },
+    { email: 'taixe04@xdv.vn', fullName: 'Lý Văn Hùng', role: 'TAI_XE', branch: 'VL01' },
+    { email: 'taixe05@xdv.vn', fullName: 'Võ Văn Thành', role: 'TAI_XE', branch: 'BL01' },
   ];
 
   for (const user of users) {
@@ -367,24 +372,33 @@ async function main() {
 
   // 9. Xe mẫu VinFast
   const vehicleDataList = [
-    // HN01 — 8 xe
-    { licensePlate: '30A-001.11', vin: 'VF9S1AADN4M100001', modelName: 'VF e34', yearMfg: 2022, currentOdo: 12500, branchCode: 'HN01', status: 'ACTIVE' },
-    { licensePlate: '30A-002.22', vin: 'VF9S1AADN5M100002', modelName: 'VF 5',   yearMfg: 2023, currentOdo: 22300, branchCode: 'HN01', status: 'ACTIVE' },
-    { licensePlate: '30A-003.33', vin: 'VF9S1AADN6M100003', modelName: 'VF 6',   yearMfg: 2023, currentOdo: 8800,  branchCode: 'HN01', status: 'ACTIVE' },
-    { licensePlate: '30A-004.44', vin: 'VF9S1AADN7M100004', modelName: 'VF e34', yearMfg: 2022, currentOdo: 45200, branchCode: 'HN01', status: 'ACTIVE' },
-    { licensePlate: '30A-005.55', vin: 'VF9S1AADN8M100005', modelName: 'VF 8',   yearMfg: 2023, currentOdo: 5100,  branchCode: 'HN01', status: 'ACTIVE' },
-    { licensePlate: '30A-006.66', vin: 'VF9S1AADN9M100006', modelName: 'VF 6',   yearMfg: 2023, currentOdo: 15400, branchCode: 'HN01', status: 'ACTIVE' },
-    { licensePlate: '30A-007.77', vin: 'VF9S1AADNAM100007', modelName: 'VF 5',   yearMfg: 2023, currentOdo: 3200,  branchCode: 'HN01', status: 'IN_WORKSHOP' },
-    { licensePlate: '30A-008.88', vin: 'VF9S1AADN0M100008', modelName: 'VF 9',   yearMfg: 2022, currentOdo: 31500, branchCode: 'HN01', status: 'ACTIVE' },
-    // HN02 — 4 xe
-    { licensePlate: '29A-001.11', vin: 'VF9S1AADN1M200001', modelName: 'VF 5',   yearMfg: 2023, currentOdo: 18100, branchCode: 'HN02', status: 'ACTIVE' },
-    { licensePlate: '29A-002.22', vin: 'VF9S1AADN2M200002', modelName: 'VF 6',   yearMfg: 2023, currentOdo: 9600,  branchCode: 'HN02', status: 'ACTIVE' },
-    { licensePlate: '29A-003.33', vin: 'VF9S1AADN3M200003', modelName: 'VF e34', yearMfg: 2022, currentOdo: 26000, branchCode: 'HN02', status: 'ACTIVE' },
-    { licensePlate: '29A-004.44', vin: 'VF9S1AADN4M200004', modelName: 'VF 8',   yearMfg: 2023, currentOdo: 11200, branchCode: 'HN02', status: 'ACTIVE' },
-    // HP01 — 3 xe
-    { licensePlate: '15A-001.11', vin: 'VF9S1AADN1M300001', modelName: 'VF 8',   yearMfg: 2022, currentOdo: 38500, branchCode: 'HP01', status: 'ACTIVE' },
-    { licensePlate: '15A-002.22', vin: 'VF9S1AADN2M300002', modelName: 'VF 9',   yearMfg: 2022, currentOdo: 17800, branchCode: 'HP01', status: 'ACTIVE' },
-    { licensePlate: '15A-003.33', vin: 'VF9S1AADN3M300003', modelName: 'VF 6',   yearMfg: 2023, currentOdo: 6900,  branchCode: 'HP01', status: 'ACTIVE' },
+    // RG01 — Đội xe Rạch Giá (8 xe)
+    { licensePlate: '68A-001.11', vin: 'VF9S1AADN4M100001', modelName: 'VF e34', yearMfg: 2022, currentOdo: 12500, branchCode: 'RG01', status: 'ACTIVE' },
+    { licensePlate: '68A-002.22', vin: 'VF9S1AADN5M100002', modelName: 'VF 5',   yearMfg: 2023, currentOdo: 22300, branchCode: 'RG01', status: 'ACTIVE' },
+    { licensePlate: '68A-003.33', vin: 'VF9S1AADN6M100003', modelName: 'VF 6',   yearMfg: 2023, currentOdo: 8800,  branchCode: 'RG01', status: 'ACTIVE' },
+    { licensePlate: '68A-004.44', vin: 'VF9S1AADN7M100004', modelName: 'VF e34', yearMfg: 2022, currentOdo: 45200, branchCode: 'RG01', status: 'ACTIVE' },
+    { licensePlate: '68A-005.55', vin: 'VF9S1AADN8M100005', modelName: 'VF 8',   yearMfg: 2023, currentOdo: 5100,  branchCode: 'RG01', status: 'ACTIVE' },
+    { licensePlate: '68A-006.66', vin: 'VF9S1AADN9M100006', modelName: 'VF 6',   yearMfg: 2023, currentOdo: 15400, branchCode: 'RG01', status: 'ACTIVE' },
+    { licensePlate: '68A-007.77', vin: 'VF9S1AADNAM100007', modelName: 'VF 5',   yearMfg: 2023, currentOdo: 3200,  branchCode: 'RG01', status: 'IN_WORKSHOP' },
+    { licensePlate: '68A-008.88', vin: 'VF9S1AADN0M100008', modelName: 'VF 9',   yearMfg: 2022, currentOdo: 31500, branchCode: 'RG01', status: 'ACTIVE' },
+    // AG01 — Đội xe An Giang (4 xe)
+    { licensePlate: '67A-001.11', vin: 'VF9S1AADN1M200001', modelName: 'VF 5',   yearMfg: 2023, currentOdo: 18100, branchCode: 'AG01', status: 'ACTIVE' },
+    { licensePlate: '67A-002.22', vin: 'VF9S1AADN2M200002', modelName: 'VF 6',   yearMfg: 2023, currentOdo: 9600,  branchCode: 'AG01', status: 'ACTIVE' },
+    { licensePlate: '67A-003.33', vin: 'VF9S1AADN3M200003', modelName: 'VF e34', yearMfg: 2022, currentOdo: 26000, branchCode: 'AG01', status: 'ACTIVE' },
+    { licensePlate: '67A-004.44', vin: 'VF9S1AADN4M200004', modelName: 'VF 8',   yearMfg: 2023, currentOdo: 11200, branchCode: 'AG01', status: 'ACTIVE' },
+    // CT01 — Đội xe Cần Thơ (4 xe)
+    { licensePlate: '65A-001.11', vin: 'VF9S1AADN1M300001', modelName: 'VF 8',   yearMfg: 2022, currentOdo: 38500, branchCode: 'CT01', status: 'ACTIVE' },
+    { licensePlate: '65A-002.22', vin: 'VF9S1AADN2M300002', modelName: 'VF 9',   yearMfg: 2022, currentOdo: 17800, branchCode: 'CT01', status: 'ACTIVE' },
+    { licensePlate: '65A-003.33', vin: 'VF9S1AADN3M300003', modelName: 'VF 6',   yearMfg: 2023, currentOdo: 6900,  branchCode: 'CT01', status: 'ACTIVE' },
+    { licensePlate: '65A-004.44', vin: 'VF9S1AADN4M300004', modelName: 'VF 5',   yearMfg: 2024, currentOdo: 3500,  branchCode: 'CT01', status: 'ACTIVE' },
+    // VL01 — Đội xe Vĩnh Long (3 xe)
+    { licensePlate: '64A-001.11', vin: 'VF9S1AADN1M400001', modelName: 'VF e34', yearMfg: 2023, currentOdo: 14200, branchCode: 'VL01', status: 'ACTIVE' },
+    { licensePlate: '64A-002.22', vin: 'VF9S1AADN2M400002', modelName: 'VF 5',   yearMfg: 2024, currentOdo: 7800,  branchCode: 'VL01', status: 'ACTIVE' },
+    { licensePlate: '64A-003.33', vin: 'VF9S1AADN3M400003', modelName: 'VF 6',   yearMfg: 2024, currentOdo: 4100,  branchCode: 'VL01', status: 'ACTIVE' },
+    // BL01 — Đội xe Bạc Liêu (3 xe)
+    { licensePlate: '94A-001.11', vin: 'VF9S1AADN1M500001', modelName: 'VF 5',   yearMfg: 2024, currentOdo: 8900,  branchCode: 'BL01', status: 'ACTIVE' },
+    { licensePlate: '94A-002.22', vin: 'VF9S1AADN2M500002', modelName: 'VF e34', yearMfg: 2023, currentOdo: 19500, branchCode: 'BL01', status: 'ACTIVE' },
+    { licensePlate: '94A-003.33', vin: 'VF9S1AADN3M500003', modelName: 'VF 8',   yearMfg: 2023, currentOdo: 12300, branchCode: 'BL01', status: 'ACTIVE' },
   ];
 
   const createdVehicles: any[] = [];
@@ -413,11 +427,12 @@ async function main() {
 
   // 10. ODO logs mẫu
   const odoLogs = [
-    { licensePlate: '30A-001.11', logs: [7000, 10000, 12500] },
-    { licensePlate: '30A-002.22', logs: [5000, 10000, 15000, 22300] },
-    { licensePlate: '30A-004.44', logs: [10000, 20000, 30000, 40000, 45200] },
-    { licensePlate: '30A-008.88', logs: [10000, 20000, 31500] },
-    { licensePlate: '15A-001.11', logs: [10000, 20000, 30000, 38500] },
+    { licensePlate: '68A-001.11', logs: [7000, 10000, 12500] },
+    { licensePlate: '68A-002.22', logs: [5000, 10000, 15000, 22300] },
+    { licensePlate: '68A-004.44', logs: [10000, 20000, 30000, 40000, 45200] },
+    { licensePlate: '68A-008.88', logs: [10000, 20000, 31500] },
+    { licensePlate: '65A-001.11', logs: [10000, 20000, 30000, 38500] },
+    { licensePlate: '94A-002.22', logs: [5000, 10000, 15000, 19500] },
   ];
   for (const entry of odoLogs) {
     const vehicle = vByPlate(entry.licensePlate);
@@ -448,7 +463,7 @@ async function main() {
   const jobDefs = [
     {
       code: 'WS-2025-000001',
-      licensePlate: '30A-007.77',
+      licensePlate: '68A-007.77',
       branchCode: 'XW01',
       odoAtEntry: 3200,
       entryReason: 'Bảo dưỡng định kỳ Cấp 1',
@@ -457,7 +472,7 @@ async function main() {
     },
     {
       code: 'WS-2025-000002',
-      licensePlate: '30A-002.22',
+      licensePlate: '68A-002.22',
       branchCode: 'XW01',
       odoAtEntry: 20000,
       entryReason: 'Bảo dưỡng định kỳ Cấp 3 — 20.000 km',
@@ -466,7 +481,7 @@ async function main() {
     },
     {
       code: 'WS-2025-000003',
-      licensePlate: '30A-004.44',
+      licensePlate: '68A-004.44',
       branchCode: 'XW01',
       odoAtEntry: 40000,
       entryReason: 'Bảo dưỡng định kỳ Cấp 4 — 40.000 km',
@@ -475,7 +490,7 @@ async function main() {
     },
     {
       code: 'WS-2025-000004',
-      licensePlate: '29A-003.33',
+      licensePlate: '67A-003.33',
       branchCode: 'XW01',
       odoAtEntry: 25800,
       entryReason: 'Xe rung lắc khi phanh, kiểm tra má phanh',
@@ -484,12 +499,21 @@ async function main() {
     },
     {
       code: 'WS-2025-000005',
-      licensePlate: '15A-001.11',
+      licensePlate: '65A-001.11',
       branchCode: 'XW01',
       odoAtEntry: 38000,
       entryReason: 'Bảo dưỡng định kỳ Cấp 4 — kiểm tra đai cam',
       status: 'QUOTED' as const,
       planId: planCap4.id,
+    },
+    {
+      code: 'WS-2025-000006',
+      licensePlate: '94A-002.22',
+      branchCode: 'XW01',
+      odoAtEntry: 19500,
+      entryReason: 'Bảo dưỡng định kỳ Cấp 3 — 20.000 km',
+      status: 'DELIVERED' as const,
+      planId: planCap3.id,
     },
   ];
 
@@ -591,19 +615,22 @@ async function main() {
 
   // 13. Maintenance Records — lịch sử đã BD (để getDueVehicles hoạt động đúng)
   const maintenanceRecordDefs = [
-    // 30A-002.22 — đã BD Cấp 1 tại 5k, Cấp 2 tại 10k, Cấp 1 tại 15k; còn thiếu BD Cấp 1 tại 20k → hiện OVERDUE
-    { licensePlate: '30A-002.22', planId: planCap1.id, odoAtService: 5000,  nextDueOdo: 10000, status: 'COMPLETED' },
-    { licensePlate: '30A-002.22', planId: planCap2.id, odoAtService: 10000, nextDueOdo: 20000, status: 'COMPLETED' },
-    { licensePlate: '30A-002.22', planId: planCap1.id, odoAtService: 15000, nextDueOdo: 20000, status: 'COMPLETED' },
-    // 30A-004.44 — đã BD Cấp 4 tại 40k (từ job WS-2025-000003)
-    { licensePlate: '30A-004.44', planId: planCap4.id, odoAtService: 40000, nextDueOdo: 80000, status: 'COMPLETED' },
-    // 30A-001.11 — đã BD Cấp 2 tại 10k, sắp đến Cấp 1 tại 12500 (còn 2500)
-    { licensePlate: '30A-001.11', planId: planCap2.id, odoAtService: 10000, nextDueOdo: 20000, status: 'COMPLETED' },
-    // 15A-001.11 — đã BD tại 30k, sắp đến Cấp 4 tại 40k (còn 1500)
-    { licensePlate: '15A-001.11', planId: planCap1.id, odoAtService: 30000, nextDueOdo: 35000, status: 'COMPLETED' },
-    { licensePlate: '15A-001.11', planId: planCap3.id, odoAtService: 20000, nextDueOdo: 40000, status: 'COMPLETED' },
-    // 29A-003.33 — đã BD Cấp 1 tại 25k
-    { licensePlate: '29A-003.33', planId: planCap1.id, odoAtService: 25000, nextDueOdo: 30000, status: 'COMPLETED' },
+    // 68A-002.22 — đã BD Cấp 1 tại 5k, Cấp 2 tại 10k, Cấp 1 tại 15k; còn thiếu BD Cấp 1 tại 20k → hiện OVERDUE
+    { licensePlate: '68A-002.22', planId: planCap1.id, odoAtService: 5000,  nextDueOdo: 10000, status: 'COMPLETED' },
+    { licensePlate: '68A-002.22', planId: planCap2.id, odoAtService: 10000, nextDueOdo: 20000, status: 'COMPLETED' },
+    { licensePlate: '68A-002.22', planId: planCap1.id, odoAtService: 15000, nextDueOdo: 20000, status: 'COMPLETED' },
+    // 68A-004.44 — đã BD Cấp 4 tại 40k (từ job WS-2025-000003)
+    { licensePlate: '68A-004.44', planId: planCap4.id, odoAtService: 40000, nextDueOdo: 80000, status: 'COMPLETED' },
+    // 68A-001.11 — đã BD Cấp 2 tại 10k, sắp đến Cấp 1 tại 15k (còn 2500)
+    { licensePlate: '68A-001.11', planId: planCap2.id, odoAtService: 10000, nextDueOdo: 20000, status: 'COMPLETED' },
+    // 65A-001.11 — đã BD tại 30k, sắp đến Cấp 4 tại 40k (còn 1500)
+    { licensePlate: '65A-001.11', planId: planCap1.id, odoAtService: 30000, nextDueOdo: 35000, status: 'COMPLETED' },
+    { licensePlate: '65A-001.11', planId: planCap3.id, odoAtService: 20000, nextDueOdo: 40000, status: 'COMPLETED' },
+    // 67A-003.33 — đã BD Cấp 1 tại 25k
+    { licensePlate: '67A-003.33', planId: planCap1.id, odoAtService: 25000, nextDueOdo: 30000, status: 'COMPLETED' },
+    // 94A-002.22 — đã BD Cấp 2 tại 10k, Cấp 1 tại 15k
+    { licensePlate: '94A-002.22', planId: planCap2.id, odoAtService: 10000, nextDueOdo: 20000, status: 'COMPLETED' },
+    { licensePlate: '94A-002.22', planId: planCap1.id, odoAtService: 15000, nextDueOdo: 20000, status: 'COMPLETED' },
   ];
 
   for (const mrd of maintenanceRecordDefs) {
@@ -629,22 +656,25 @@ async function main() {
 
   // 14. Fleet Costs
   const costDefs = [
-    { licensePlate: '30A-001.11', category: 'ELECTRICITY', amount: 850000,  description: 'Sạc điện tháng 5/2025',  costDate: new Date('2025-05-15') },
-    { licensePlate: '30A-002.22', category: 'ELECTRICITY', amount: 920000,  description: 'Sạc điện tháng 5/2025',  costDate: new Date('2025-05-15') },
-    { licensePlate: '30A-003.33', category: 'TIRE',        amount: 3200000, description: 'Thay 2 lốp trước',       costDate: new Date('2025-04-10') },
-    { licensePlate: '30A-004.44', category: 'MAINTENANCE', amount: 2800000, description: 'Đại bảo dưỡng Cấp 4',    costDate: new Date('2025-05-20') },
-    { licensePlate: '30A-005.55', category: 'INSURANCE',   amount: 8500000, description: 'Bảo hiểm xe 2025',       costDate: new Date('2025-01-05') },
-    { licensePlate: '30A-006.66', category: 'ELECTRICITY', amount: 780000,  description: 'Sạc điện tháng 5/2025',  costDate: new Date('2025-05-15') },
-    { licensePlate: '30A-008.88', category: 'ELECTRICITY', amount: 1100000, description: 'Sạc điện tháng 5/2025',  costDate: new Date('2025-05-15') },
-    { licensePlate: '29A-001.11', category: 'ELECTRICITY', amount: 860000,  description: 'Sạc điện tháng 5/2025',  costDate: new Date('2025-05-15') },
-    { licensePlate: '29A-002.22', category: 'BRAKE',       amount: 1500000, description: 'Thay má phanh 4 bánh',   costDate: new Date('2025-03-22') },
-    { licensePlate: '29A-003.33', category: 'MAINTENANCE', amount: 1630000, description: 'Bảo dưỡng Cấp 3',        costDate: new Date('2025-02-14') },
-    { licensePlate: '15A-001.11', category: 'ELECTRICITY', amount: 950000,  description: 'Sạc điện tháng 5/2025',  costDate: new Date('2025-05-15') },
-    { licensePlate: '15A-001.11', category: 'TIRE',        amount: 6400000, description: 'Thay 4 lốp đồng bộ',     costDate: new Date('2025-04-05') },
-    { licensePlate: '15A-002.22', category: 'ELECTRICITY', amount: 870000,  description: 'Sạc điện tháng 5/2025',  costDate: new Date('2025-05-15') },
-    { licensePlate: '30A-001.11', category: 'ELECTRICITY', amount: 830000,  description: 'Sạc điện tháng 6/2025',  costDate: new Date('2025-06-01') },
-    { licensePlate: '30A-002.22', category: 'ELECTRICITY', amount: 890000,  description: 'Sạc điện tháng 6/2025',  costDate: new Date('2025-06-01') },
-    { licensePlate: '30A-004.44', category: 'ACCIDENT',    amount: 4500000, description: 'Sửa cản trước do va chạm nhẹ', costDate: new Date('2025-05-28') },
+    { licensePlate: '68A-001.11', category: 'ELECTRICITY', amount: 850000,  description: 'Sạc điện tháng 5/2025',  costDate: new Date('2025-05-15') },
+    { licensePlate: '68A-002.22', category: 'ELECTRICITY', amount: 920000,  description: 'Sạc điện tháng 5/2025',  costDate: new Date('2025-05-15') },
+    { licensePlate: '68A-003.33', category: 'TIRE',        amount: 3200000, description: 'Thay 2 lốp trước',       costDate: new Date('2025-04-10') },
+    { licensePlate: '68A-004.44', category: 'MAINTENANCE', amount: 2800000, description: 'Đại bảo dưỡng Cấp 4',    costDate: new Date('2025-05-20') },
+    { licensePlate: '68A-005.55', category: 'INSURANCE',   amount: 8500000, description: 'Bảo hiểm xe 2025',       costDate: new Date('2025-01-05') },
+    { licensePlate: '68A-006.66', category: 'ELECTRICITY', amount: 780000,  description: 'Sạc điện tháng 5/2025',  costDate: new Date('2025-05-15') },
+    { licensePlate: '68A-008.88', category: 'ELECTRICITY', amount: 1100000, description: 'Sạc điện tháng 5/2025',  costDate: new Date('2025-05-15') },
+    { licensePlate: '67A-001.11', category: 'ELECTRICITY', amount: 860000,  description: 'Sạc điện tháng 5/2025',  costDate: new Date('2025-05-15') },
+    { licensePlate: '67A-002.22', category: 'BRAKE',       amount: 1500000, description: 'Thay má phanh 4 bánh',   costDate: new Date('2025-03-22') },
+    { licensePlate: '67A-003.33', category: 'MAINTENANCE', amount: 1630000, description: 'Bảo dưỡng Cấp 3',        costDate: new Date('2025-02-14') },
+    { licensePlate: '65A-001.11', category: 'ELECTRICITY', amount: 950000,  description: 'Sạc điện tháng 5/2025',  costDate: new Date('2025-05-15') },
+    { licensePlate: '65A-001.11', category: 'TIRE',        amount: 6400000, description: 'Thay 4 lốp đồng bộ',     costDate: new Date('2025-04-05') },
+    { licensePlate: '65A-002.22', category: 'ELECTRICITY', amount: 870000,  description: 'Sạc điện tháng 5/2025',  costDate: new Date('2025-05-15') },
+    { licensePlate: '68A-001.11', category: 'ELECTRICITY', amount: 830000,  description: 'Sạc điện tháng 6/2025',  costDate: new Date('2025-06-01') },
+    { licensePlate: '68A-002.22', category: 'ELECTRICITY', amount: 890000,  description: 'Sạc điện tháng 6/2025',  costDate: new Date('2025-06-01') },
+    { licensePlate: '68A-004.44', category: 'ACCIDENT',    amount: 4500000, description: 'Sửa cản trước do va chạm nhẹ', costDate: new Date('2025-05-28') },
+    { licensePlate: '94A-001.11', category: 'ELECTRICITY', amount: 750000,  description: 'Sạc điện tháng 5/2025',  costDate: new Date('2025-05-15') },
+    { licensePlate: '94A-003.33', category: 'INSURANCE',   amount: 8500000, description: 'Bảo hiểm xe 2025',       costDate: new Date('2025-01-10') },
+    { licensePlate: '64A-001.11', category: 'ELECTRICITY', amount: 810000,  description: 'Sạc điện tháng 5/2025',  costDate: new Date('2025-05-15') },
   ];
 
   for (const cd of costDefs) {
@@ -671,31 +701,45 @@ async function main() {
   const incidentDefs = [
     {
       code: 'INC-2025-000001',
-      licensePlate: '30A-004.44',
-      description: 'Va chạm nhẹ tại nút giao Láng Hạ — Đê La Thành, cản trước bị trầy xước',
+      licensePlate: '68A-004.44',
+      description: 'Va chạm nhẹ tại ngã tư Nguyễn Trung Trực — 3/2, Rạch Giá. Cản trước bị trầy xước',
       status: 'RESOLVED',
       priority: 'MEDIUM',
     },
     {
       code: 'INC-2025-000002',
-      licensePlate: '29A-003.33',
-      description: 'Xe bị xịt lốp trên đường Nguyễn Văn Cừ, đã thay lốp dự phòng tại chỗ',
+      licensePlate: '67A-003.33',
+      description: 'Xe bị xịt lốp trên QL91 đoạn Long Xuyên, đã thay lốp dự phòng tại chỗ',
       status: 'RESOLVED',
       priority: 'LOW',
     },
     {
       code: 'INC-2025-000003',
-      licensePlate: '30A-006.66',
+      licensePlate: '68A-006.66',
       description: 'Màn hình trung tâm không nhận cảm ứng, đang chờ linh kiện từ VinFast',
       status: 'IN_PROGRESS',
       priority: 'MEDIUM',
     },
     {
       code: 'INC-2025-000004',
-      licensePlate: '15A-001.11',
-      description: 'Tiếng kêu bất thường từ hệ thống treo trước khi đi qua ổ gà',
+      licensePlate: '65A-001.11',
+      description: 'Tiếng kêu bất thường từ hệ thống treo trước khi đi qua ổ gà trên đường Nguyễn Văn Linh, Cần Thơ',
       status: 'IN_PROGRESS',
       priority: 'HIGH',
+    },
+    {
+      code: 'INC-2025-000005',
+      licensePlate: '94A-001.11',
+      description: 'Đèn cảnh báo pin sáng liên tục, nghi lỗi cell pin. Xe đã tạm dừng hoạt động',
+      status: 'NEW',
+      priority: 'CRITICAL',
+    },
+    {
+      code: 'INC-2025-000006',
+      licensePlate: '64A-002.22',
+      description: 'Gương chiếu hậu bên trái bị gãy do va quẹt khi đậu xe',
+      status: 'ACKNOWLEDGED',
+      priority: 'LOW',
     },
   ];
 
@@ -723,11 +767,11 @@ async function main() {
     {
       code: 'PTB-2025-000001',
       status: 'APPROVED',
-      note: 'Điều chuyển lốp dự phòng từ xe HN01 sang xe đang sửa',
+      note: 'Điều chuyển lốp dự phòng từ xe Rạch Giá sang xe đang sửa',
       lines: [
         {
-          fromPlate: '30A-005.55',
-          toPlate: '30A-007.77',
+          fromPlate: '68A-005.55',
+          toPlate: '68A-007.77',
           itemDescription: 'Lốp dự phòng 215/55R17',
           quantity: 1,
         },
@@ -736,17 +780,17 @@ async function main() {
     {
       code: 'PTB-2025-000002',
       status: 'APPROVED',
-      note: 'Chuyển kích và dụng cụ thay lốp sang chi nhánh HN02',
+      note: 'Chuyển kích và dụng cụ thay lốp sang chi nhánh An Giang',
       lines: [
         {
-          fromPlate: '30A-008.88',
-          toPlate: '29A-001.11',
+          fromPlate: '68A-008.88',
+          toPlate: '67A-001.11',
           itemDescription: 'Kích nâng xe thủy lực mini',
           quantity: 1,
         },
         {
-          fromPlate: '30A-008.88',
-          toPlate: '29A-001.11',
+          fromPlate: '68A-008.88',
+          toPlate: '67A-001.11',
           itemDescription: 'Bộ cờ lê mở bulong bánh xe',
           quantity: 1,
         },
