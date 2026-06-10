@@ -971,7 +971,7 @@ async function main() {
     { licensePlate: '65A-001.11', category: 'INSURANCE',   amount: 9200000, description: 'Bảo hiểm xe 2025',      costDate: new Date('2025-01-03') },
     { licensePlate: '68A-008.88', category: 'MAINTENANCE', amount: 1630000, description: 'Bảo dưỡng Cấp 3 (20k km)', costDate: new Date('2025-03-10') },
     { licensePlate: '67A-002.22', category: 'TIRE',        amount: 4400000, description: 'Thay 2 lốp sau',         costDate: new Date('2025-05-02') },
-    { licensePlate: '68A-006.66', category: 'BODY',        amount: 2800000, description: 'Sơn lại cánh cửa phải (trầy)', costDate: new Date('2025-04-22') },
+    { licensePlate: '68A-006.66', category: 'OTHER',        amount: 2800000, description: 'Sơn lại cánh cửa phải (trầy)', costDate: new Date('2025-04-22') },
   ];
 
   for (const cd of extraCosts) {
