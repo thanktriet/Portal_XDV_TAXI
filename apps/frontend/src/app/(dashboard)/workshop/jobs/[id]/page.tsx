@@ -292,7 +292,18 @@ export default function WorkshopJobDetailPage() {
           {nextStatuses.filter(canTransitionTo).map((next) => (
             <button
               key={next}
-              onClick={() => setTransition({ targetStatus: next, note: '', dmsRef: '', estimatedCost: '' })}
+              onClick={() => {
+                let estimatedCost = ''
+                let note = ''
+                // Auto-fill từ repair orders khi chuyển QUOTED
+                if (next === 'QUOTED' && job.repairOrders?.length > 0) {
+                  const total = job.repairOrders.reduce((sum: number, ro: any) => sum + Number(ro.totalCost || 0), 0)
+                  estimatedCost = String(total)
+                  const roDescriptions = job.repairOrders.map((ro: any) => `${ro.code}: ${ro.description}`).join('; ')
+                  note = `Báo giá: ${total.toLocaleString('vi-VN')}đ — ${roDescriptions}`
+                }
+                setTransition({ targetStatus: next, note, dmsRef: '', estimatedCost })
+              }}
               disabled={!!transition}
               className={`flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-lg transition disabled:opacity-40 ${
                 next === 'REJECTED'
