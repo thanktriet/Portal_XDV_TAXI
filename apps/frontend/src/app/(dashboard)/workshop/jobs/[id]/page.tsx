@@ -227,6 +227,11 @@ export default function WorkshopJobDetailPage() {
     if (targetStatus === 'APPROVED' || targetStatus === 'REJECTED') {
       return FLEET_ROLES.includes(user.role)
     }
+    // Must have repair order with items before QUOTED
+    if (targetStatus === 'QUOTED') {
+      const hasItems = job?.repairOrders?.some((ro: any) => ro.items?.length > 0)
+      if (!hasItems) return false
+    }
     return true
   }
 
@@ -306,7 +311,9 @@ export default function WorkshopJobDetailPage() {
             <p className="text-sm text-slate-400 italic">
               {job.status === 'QUOTED'
                 ? 'Đang chờ Quản lý Đội xe phê duyệt báo giá'
-                : 'Bạn không có quyền thực hiện bước tiếp theo'}
+                : job.status === 'DIAGNOSING' && !job.repairOrders?.some((ro: any) => ro.items?.length > 0)
+                  ? '⚠️ Tạo phiếu báo giá chi tiết trước khi gửi báo giá'
+                  : 'Bạn không có quyền thực hiện bước tiếp theo'}
             </p>
           )}
 
