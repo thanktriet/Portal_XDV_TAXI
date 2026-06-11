@@ -536,9 +536,9 @@ export default function WorkshopJobDetailPage() {
 
         <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-base font-semibold text-slate-900 dark:text-white">Lệnh sửa chữa (RO)</h3>
-            {['APPROVED','WAITING_PARTS','IN_PROGRESS','QUALITY_CHECK','COMPLETED'].includes(job.status) && (
-              <Link href={`/workshop/repair-orders/new?jobId=${job.id}`} className="text-xs text-primary hover:underline">+ Thêm RO</Link>
+            <h3 className="text-base font-semibold text-slate-900 dark:text-white">Phiếu báo giá (RO)</h3>
+            {['RECEIVED','DIAGNOSING','QUOTED','APPROVED','WAITING_PARTS','IN_PROGRESS','QUALITY_CHECK','COMPLETED'].includes(job.status) && (
+              <Link href={`/workshop/repair-orders/new?jobId=${job.id}`} className="flex items-center gap-1 text-xs text-primary hover:underline font-medium">+ Tạo báo giá</Link>
             )}
           </div>
           {job.repairOrders?.length > 0 ? (
