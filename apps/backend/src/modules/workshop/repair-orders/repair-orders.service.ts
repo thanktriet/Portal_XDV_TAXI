@@ -109,7 +109,10 @@ export class RepairOrdersService {
   }
 
   async updateStatus(id: string, status: string) {
-    const ro = await this.prisma.repairOrder.findUnique({ where: { id } });
+    const ro = await this.prisma.repairOrder.findUnique({
+      where: { id },
+      include: { job: true },
+    });
     if (!ro) throw new NotFoundException('Repair Order không tồn tại');
 
     const ALLOWED: Record<string, string[]> = {
@@ -129,10 +132,40 @@ export class RepairOrdersService {
     const data: any = { status };
     if (status === 'COMPLETED') data.closedAt = new Date();
 
-    return this.prisma.repairOrder.update({
+    const updated = await this.prisma.repairOrder.update({
       where: { id },
       data,
       include: { items: true },
     });
+
+    // Auto-sync Job status based on RO changes
+    if (ro.job) {
+      const jobId = ro.job.id;
+      const jobStatus = ro.job.status;
+
+      // Any RO starts → Job moves to IN_PROGRESS
+      if (status === 'IN_PROGRESS' && ['APPROVED', 'WAITING_PARTS'].includes(jobStatus)) {
+        await this.prisma.workshopJob.update({
+          where: { id: jobId },
+          data: { status: 'IN_PROGRESS' },
+        });
+      }
+
+      // Check if ALL ROs are COMPLETED → Job moves to QUALITY_CHECK
+      if (status === 'COMPLETED') {
+        const allROs = await this.prisma.repairOrder.findMany({
+          where: { jobId },
+        });
+        const allCompleted = allROs.every((r) => r.id === id ? true : r.status === 'COMPLETED');
+        if (allCompleted && ['IN_PROGRESS', 'APPROVED', 'WAITING_PARTS'].includes(jobStatus)) {
+          await this.prisma.workshopJob.update({
+            where: { id: jobId },
+            data: { status: 'QUALITY_CHECK' },
+          });
+        }
+      }
+    }
+
+    return updated;
   }
 }
