@@ -2,6 +2,7 @@ import {
   Controller,
   Get,
   Post,
+  Patch,
   Param,
   Body,
   Query,
@@ -53,5 +54,12 @@ export class RepairOrdersController {
   @ApiOperation({ summary: 'Thêm item vào Repair Order' })
   addItem(@Param('id') id: string, @Body() dto: AddRepairOrderItemDto) {
     return this.roService.addItem(id, dto);
+  }
+
+  @Patch(':id/status')
+  @RequirePermissions('repair_orders:update')
+  @ApiOperation({ summary: 'Cập nhật trạng thái Repair Order' })
+  updateStatus(@Param('id') id: string, @Body('status') status: string) {
+    return this.roService.updateStatus(id, status);
   }
 }

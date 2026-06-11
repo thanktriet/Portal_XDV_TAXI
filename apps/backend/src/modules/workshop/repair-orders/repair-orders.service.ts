@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../../database/prisma.service';
 import { CreateRepairOrderDto } from './dto/create-repair-order.dto';
 import { AddRepairOrderItemDto } from './dto/add-ro-item.dto';
@@ -106,5 +106,33 @@ export class RepairOrdersService {
     });
 
     return item;
+  }
+
+  async updateStatus(id: string, status: string) {
+    const ro = await this.prisma.repairOrder.findUnique({ where: { id } });
+    if (!ro) throw new NotFoundException('Repair Order không tồn tại');
+
+    const ALLOWED: Record<string, string[]> = {
+      OPEN: ['IN_PROGRESS', 'CANCELLED'],
+      IN_PROGRESS: ['COMPLETED', 'OPEN'],
+      COMPLETED: [],
+      CANCELLED: ['OPEN'],
+    };
+
+    const allowed = ALLOWED[ro.status] || [];
+    if (!allowed.includes(status)) {
+      throw new BadRequestException(
+        `Không thể chuyển từ ${ro.status} sang ${status}. Cho phép: ${allowed.join(', ') || 'không có'}`,
+      );
+    }
+
+    const data: any = { status };
+    if (status === 'COMPLETED') data.closedAt = new Date();
+
+    return this.prisma.repairOrder.update({
+      where: { id },
+      data,
+      include: { items: true },
+    });
   }
 }

@@ -11,9 +11,24 @@ import { ArrowLeft, Plus, Wrench, Package, ClipboardList } from 'lucide-react'
 
 const STATUS_LABEL: Record<string, { label: string; cls: string }> = {
   OPEN: { label: 'Đang mở', cls: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' },
-  IN_PROGRESS: { label: 'Đang sửa', cls: 'bg-warning/10 text-warning' },
-  CLOSED: { label: 'Hoàn tất', cls: 'bg-success/10 text-success' },
+  IN_PROGRESS: { label: 'Đang thực hiện', cls: 'bg-warning/10 text-warning' },
+  COMPLETED: { label: 'Hoàn tất', cls: 'bg-success/10 text-success' },
   CANCELLED: { label: 'Hủy', cls: 'bg-slate-100 text-slate-500' },
+}
+
+const ALLOWED_RO_TRANSITIONS: Record<string, { status: string; label: string; cls: string }[]> = {
+  OPEN: [
+    { status: 'IN_PROGRESS', label: 'Bắt đầu thực hiện', cls: 'bg-warning hover:bg-warning/90 text-white' },
+    { status: 'CANCELLED', label: 'Hủy', cls: 'bg-slate-500 hover:bg-slate-600 text-white' },
+  ],
+  IN_PROGRESS: [
+    { status: 'COMPLETED', label: 'Hoàn tất', cls: 'bg-success hover:bg-success/90 text-white' },
+    { status: 'OPEN', label: 'Quay lại Mở', cls: 'bg-slate-500 hover:bg-slate-600 text-white' },
+  ],
+  COMPLETED: [],
+  CANCELLED: [
+    { status: 'OPEN', label: 'Mở lại', cls: 'bg-blue-500 hover:bg-blue-600 text-white' },
+  ],
 }
 
 const EMPTY_ITEM = { type: 'LABOR' as 'LABOR' | 'PART', description: '', partId: '', quantity: '1', unitPrice: '' }
@@ -29,6 +44,20 @@ export default function RepairOrderDetailPage() {
     queryFn: async () => {
       const { data } = await api.get(`/workshop/repair-orders/${id}`)
       return data
+    },
+  })
+
+  const statusMutation = useMutation({
+    mutationFn: async (status: string) => {
+      const { data } = await api.patch(`/workshop/repair-orders/${id}/status`, { status })
+      return data
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['repair-order', id] })
+      toast.success('Cập nhật trạng thái thành công')
+    },
+    onError: (err: any) => {
+      toast.error(err.response?.data?.message || 'Lỗi cập nhật trạng thái')
     },
   })
 
@@ -76,6 +105,7 @@ export default function RepairOrderDetailPage() {
   if (!ro) return null
 
   const status = STATUS_LABEL[ro.status] || { label: ro.status, cls: '' }
+  const transitions = ALLOWED_RO_TRANSITIONS[ro.status] || []
 
   return (
     <div className="space-y-6">
@@ -98,6 +128,21 @@ export default function RepairOrderDetailPage() {
           </div>
           <p className="text-sm text-slate-500 mt-0.5">Mở lúc {formatDate(ro.openedAt)}</p>
         </div>
+        {/* Status transition buttons */}
+        {transitions.length > 0 && (
+          <div className="flex gap-2 shrink-0">
+            {transitions.map((t) => (
+              <button
+                key={t.status}
+                onClick={() => statusMutation.mutate(t.status)}
+                disabled={statusMutation.isPending}
+                className={`px-4 py-2 text-sm font-medium rounded-lg transition disabled:opacity-50 ${t.cls}`}
+              >
+                {statusMutation.isPending ? '...' : t.label}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Info card */}
