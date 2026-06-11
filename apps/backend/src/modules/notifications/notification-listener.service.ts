@@ -184,4 +184,36 @@ export class NotificationListenerService {
       });
     }
   }
+
+  @OnEvent('fleet.incident.created')
+  async handleIncidentCreated(payload: { incidentId: string; vehicleId: string; reporterId: string }) {
+    const incident = await this.prisma.fleetIncident.findUnique({
+      where: { id: payload.incidentId },
+      include: { vehicle: true, reporter: true },
+    });
+    if (!incident) return;
+
+    const priorityLabels: Record<string, string> = {
+      CRITICAL: '🔴 Nghiêm trọng',
+      HIGH: '🟠 Cao',
+      MEDIUM: '🟡 Trung bình',
+      LOW: '🟢 Thấp',
+    };
+
+    // Notify fleet managers + super admin
+    const managers = await this.prisma.user.findMany({
+      where: { role: { code: { in: ['SUPER_ADMIN', 'QUAN_LY_DOI_XE'] } } },
+    });
+
+    for (const user of managers) {
+      await this.notificationsService.create({
+        userId: user.id,
+        type: 'INCIDENT_NEW',
+        title: `Sự cố mới — ${incident.vehicle.licensePlate}`,
+        message: `${priorityLabels[incident.priority] || incident.priority}: ${incident.description}`,
+        data: { url: `/fleet/incidents` },
+        channels: ['IN_APP', 'PUSH'],
+      });
+    }
+  }
 }

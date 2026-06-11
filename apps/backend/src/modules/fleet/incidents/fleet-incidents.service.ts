@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { PrismaService } from '../../../database/prisma.service';
 import { CreateFleetIncidentDto } from './dto/create-incident.dto';
 import { QueryIncidentDto } from './dto/query-incident.dto';
@@ -6,7 +7,10 @@ import { IncidentStatus } from '@prisma/client';
 
 @Injectable()
 export class FleetIncidentsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private eventEmitter: EventEmitter2,
+  ) {}
 
   private async generateCode(): Promise<string> {
     const today = new Date();
@@ -27,7 +31,7 @@ export class FleetIncidentsService {
 
     const code = await this.generateCode();
 
-    return this.prisma.fleetIncident.create({
+    const incident = await this.prisma.fleetIncident.create({
       data: {
         code,
         vehicleId: dto.vehicleId,
@@ -40,6 +44,14 @@ export class FleetIncidentsService {
         reporter: { select: { id: true, fullName: true } },
       },
     });
+
+    this.eventEmitter.emit('fleet.incident.created', {
+      incidentId: incident.id,
+      vehicleId: dto.vehicleId,
+      reporterId: userId,
+    });
+
+    return incident;
   }
 
   async findAll(query: QueryIncidentDto) {
