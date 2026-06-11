@@ -148,14 +148,67 @@ export default function FleetApprovalsPage() {
                   </div>
 
                   {isExpanded && (
-                    <div className="mt-3 p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg text-sm">
-                      <p className="text-xs text-slate-400 mb-1">Lý do vào xưởng</p>
-                      <p className="text-slate-700 dark:text-slate-300">{job.entryReason}</p>
-                      {job.diagnosis && (
-                        <>
-                          <p className="text-xs text-slate-400 mt-2 mb-1">Chẩn đoán</p>
-                          <p className="text-slate-700 dark:text-slate-300">{job.diagnosis}</p>
-                        </>
+                    <div className="mt-3 space-y-3">
+                      <div className="p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg text-sm">
+                        <p className="text-xs text-slate-400 mb-1">Lý do vào xưởng</p>
+                        <p className="text-slate-700 dark:text-slate-300">{job.entryReason}</p>
+                        {job.diagnosis && (
+                          <>
+                            <p className="text-xs text-slate-400 mt-2 mb-1">Chẩn đoán</p>
+                            <p className="text-slate-700 dark:text-slate-300">{job.diagnosis}</p>
+                          </>
+                        )}
+                      </div>
+
+                      {/* Chi tiết báo giá (Repair Orders) */}
+                      {job.repairOrders?.length > 0 && (
+                        <div className="p-3 bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800/30 rounded-lg">
+                          <p className="text-xs font-semibold text-amber-700 dark:text-amber-400 uppercase tracking-wide mb-2">
+                            Chi tiết báo giá
+                          </p>
+                          {job.repairOrders.map((ro: any) => (
+                            <div key={ro.id} className="mb-3 last:mb-0">
+                              <p className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">{ro.description}</p>
+                              <table className="w-full text-xs">
+                                <thead>
+                                  <tr className="border-b border-amber-200 dark:border-amber-800/30">
+                                    <th className="text-left py-1.5 text-slate-500">Hạng mục</th>
+                                    <th className="text-center py-1.5 text-slate-500 w-12">SL</th>
+                                    <th className="text-right py-1.5 text-slate-500">Đơn giá</th>
+                                    <th className="text-right py-1.5 text-slate-500">Thành tiền</th>
+                                  </tr>
+                                </thead>
+                                <tbody className="divide-y divide-amber-100 dark:divide-amber-800/20">
+                                  {ro.items?.map((item: any) => (
+                                    <tr key={item.id}>
+                                      <td className="py-1.5 text-slate-700 dark:text-slate-300">
+                                        <span className={`inline-block w-1.5 h-1.5 rounded-full mr-1.5 ${item.type === 'LABOR' ? 'bg-blue-500' : 'bg-emerald-500'}`} />
+                                        {item.description}
+                                        {item.type === 'LABOR' && <span className="text-blue-500 ml-1">(Công)</span>}
+                                      </td>
+                                      <td className="py-1.5 text-center text-slate-500">{item.quantity}</td>
+                                      <td className="py-1.5 text-right text-slate-500">{Number(item.unitPrice).toLocaleString('vi-VN')}đ</td>
+                                      <td className="py-1.5 text-right font-medium text-slate-700 dark:text-slate-300">{Number(item.totalPrice).toLocaleString('vi-VN')}đ</td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                                <tfoot>
+                                  <tr className="border-t border-amber-300 dark:border-amber-700">
+                                    <td colSpan={3} className="py-2 text-right font-semibold text-slate-700 dark:text-slate-300">Tổng cộng:</td>
+                                    <td className="py-2 text-right font-bold text-primary">{Number(ro.totalCost).toLocaleString('vi-VN')}đ</td>
+                                  </tr>
+                                </tfoot>
+                              </table>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Nếu chưa có RO */}
+                      {(!job.repairOrders || job.repairOrders.length === 0) && (
+                        <div className="p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg text-sm text-slate-400 text-center">
+                          Chưa có phiếu báo giá chi tiết
+                        </div>
                       )}
                     </div>
                   )}

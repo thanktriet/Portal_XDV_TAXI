@@ -106,6 +106,7 @@ export class WorkshopJobsService {
           advisor: { omit: { passwordHash: true } },
           technician: true,
           plan: true,
+          repairOrders: { include: { items: true } },
         },
       }),
       this.prisma.workshopJob.count({ where }),
