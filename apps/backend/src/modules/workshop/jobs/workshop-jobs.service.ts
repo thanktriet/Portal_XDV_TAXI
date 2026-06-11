@@ -140,7 +140,7 @@ export class WorkshopJobsService {
   async updateStatus(id: string, dto: UpdateJobStatusDto, user: JwtPayload) {
     const job = await this.prisma.workshopJob.findUnique({
       where: { id },
-      include: { plan: true },
+      include: { plan: true, repairOrders: { include: { items: true } } },
     });
     if (!job) throw new NotFoundException('Workshop job không tồn tại');
 
@@ -149,6 +149,16 @@ export class WorkshopJobsService {
       throw new BadRequestException(
         `Không thể chuyển từ ${job.status} sang ${dto.status}. Cho phép: ${allowed.join(', ')}`,
       );
+    }
+
+    // Must have Repair Order with items before moving to QUOTED
+    if (dto.status === 'QUOTED') {
+      const hasItems = job.repairOrders.some((ro: any) => ro.items.length > 0);
+      if (!hasItems) {
+        throw new BadRequestException(
+          'Phải tạo phiếu báo giá chi tiết (có hạng mục) trước khi gửi báo giá',
+        );
+      }
     }
 
     // Only fleet/management roles can APPROVE or REJECT
