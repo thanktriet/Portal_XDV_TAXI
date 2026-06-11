@@ -9,7 +9,7 @@ import { toast } from 'sonner'
 import { ArrowLeft, ClipboardList } from 'lucide-react'
 
 // Statuses where a repair order makes sense
-const RO_ELIGIBLE_STATUSES = ['APPROVED', 'WAITING_PARTS', 'IN_PROGRESS', 'QUALITY_CHECK', 'COMPLETED']
+const RO_ELIGIBLE_STATUSES = ['RECEIVED', 'DIAGNOSING', 'QUOTED', 'APPROVED', 'WAITING_PARTS', 'IN_PROGRESS', 'QUALITY_CHECK', 'COMPLETED']
 
 function NewRepairOrderForm() {
   const router = useRouter()
@@ -71,6 +71,9 @@ function NewRepairOrderForm() {
   const selectedJob = jobsData?.data?.find((j: any) => j.id === form.jobId)
 
   const statusLabel: Record<string, string> = {
+    RECEIVED: 'Tiếp nhận',
+    DIAGNOSING: 'Chẩn đoán',
+    QUOTED: 'Đã báo giá',
     APPROVED: 'Duyệt sửa',
     WAITING_PARTS: 'Chờ phụ tùng',
     IN_PROGRESS: 'Đang sửa',

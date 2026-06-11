@@ -191,7 +191,7 @@ export default function RepairOrderDetailPage() {
                     value={item.partId}
                     onChange={(e) => {
                       const part = parts?.data?.find((p: any) => p.id === e.target.value)
-                      setItem({ ...item, partId: e.target.value, description: part?.name || item.description, unitPrice: String(part?.price || item.unitPrice) })
+                      setItem({ ...item, partId: e.target.value, description: part?.name || item.description, unitPrice: String(part?.sellPrice || item.unitPrice) })
                     }}
                     className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-sm outline-none focus:ring-2 focus:ring-primary/20"
                   >
