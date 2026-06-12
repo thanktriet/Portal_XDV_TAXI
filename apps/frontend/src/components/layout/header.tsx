@@ -101,9 +101,11 @@ export function Header({ onMenuToggle }: HeaderProps) {
                 </div>
                 <div className="max-h-72 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-700">
                   {recentNotifs?.data?.length > 0 ? recentNotifs.data.map((n: any) => (
-                    <div
+                    <Link
                       key={n.id}
-                      className={`px-4 py-3 text-sm ${!n.isRead ? 'bg-primary/5' : ''} hover:bg-slate-50 dark:hover:bg-slate-700/50 transition`}
+                      href={n.data?.url || '/notifications'}
+                      onClick={() => { if (!n.isRead) markReadMutation.mutate(n.id); setShowNotifMenu(false) }}
+                      className={`block px-4 py-3 text-sm ${!n.isRead ? 'bg-primary/5' : ''} hover:bg-slate-50 dark:hover:bg-slate-700/50 transition`}
                     >
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex-1 min-w-0">
@@ -114,15 +116,10 @@ export function Header({ onMenuToggle }: HeaderProps) {
                           <p className="text-[10px] text-slate-400 mt-0.5">{formatDateTime(n.createdAt)}</p>
                         </div>
                         {!n.isRead && (
-                          <button
-                            onClick={(e) => { e.stopPropagation(); markReadMutation.mutate(n.id) }}
-                            className="shrink-0 p-1 text-primary hover:bg-primary/10 rounded"
-                          >
-                            <Check className="w-3.5 h-3.5" />
-                          </button>
+                          <span className="shrink-0 w-2 h-2 mt-1.5 rounded-full bg-primary" />
                         )}
                       </div>
-                    </div>
+                    </Link>
                   )) : (
                     <div className="px-4 py-8 text-center text-sm text-slate-400">Không có thông báo</div>
                   )}
