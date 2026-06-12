@@ -36,7 +36,7 @@ export class NotificationListenerService {
   }
 
   @OnEvent('workshop.job.statusChanged')
-  async handleJobStatusChanged(payload: { jobId: string; oldStatus: string; newStatus: string }) {
+  async handleJobStatusChanged(payload: { jobId: string; fromStatus: string; toStatus: string }) {
     const job = await this.prisma.workshopJob.findUnique({
       where: { id: payload.jobId },
       include: { vehicle: true, advisor: true },
@@ -66,11 +66,11 @@ export class NotificationListenerService {
     });
 
     for (const user of usersToNotify) {
-      if (user.id === job.advisorId && payload.newStatus === 'QUOTED') continue; // advisor tự báo giá
+      if (user.id === job.advisorId && payload.toStatus === 'QUOTED') continue; // advisor tự báo giá
       await this.notificationsService.create({
         userId: user.id,
         type: 'WORKSHOP_STATUS_CHANGED',
-        title: `${job.code} → ${statusLabels[payload.newStatus] || payload.newStatus}`,
+        title: `${job.code} → ${statusLabels[payload.toStatus] || payload.toStatus}`,
         message: `Xe ${job.vehicle.licensePlate}: ${job.entryReason}`,
         data: { url: `/workshop/jobs/${job.id}` },
         channels: ['IN_APP', 'PUSH'],
