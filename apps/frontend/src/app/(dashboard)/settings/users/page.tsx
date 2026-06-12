@@ -4,10 +4,12 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import api from '@/lib/api'
 import { toast } from 'sonner'
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { Users, Plus, Shield, Building2 } from 'lucide-react'
 
 export default function UsersSettingsPage() {
   const queryClient = useQueryClient()
+  const router = useRouter()
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState({
     email: '',
@@ -215,7 +217,7 @@ export default function UsersSettingsPage() {
                     </tr>
                   ))
                 : usersData?.data?.map((user: any) => (
-                    <tr key={user.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition">
+                    <tr key={user.id} onClick={() => router.push(`/settings/users/${user.id}`)} className="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition cursor-pointer">
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-3">
                           <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
