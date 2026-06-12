@@ -5,6 +5,7 @@ import api from '@/lib/api'
 import { formatDateTime } from '@/lib/utils'
 import { toast } from 'sonner'
 import { Bell, Check } from 'lucide-react'
+import Link from 'next/link'
 
 const typeLabels: Record<string, string> = {
   MAINTENANCE_DUE: '🔧 Bảo dưỡng đến hạn',
@@ -66,32 +67,30 @@ export default function NotificationsPage() {
         ) : (
           <div className="divide-y divide-slate-100 dark:divide-slate-700">
             {data.data.map((notif: any) => (
-              <div
+              <Link
                 key={notif.id}
-                className={`px-6 py-4 flex items-start gap-4 transition ${
+                href={notif.data?.url || '#'}
+                onClick={() => { if (!notif.isRead) markReadMutation.mutate(notif.id) }}
+                className={`block px-6 py-4 transition hover:bg-slate-50 dark:hover:bg-slate-700/50 ${
                   !notif.isRead ? 'bg-primary/5' : ''
                 }`}
               >
-                <div className="flex-1">
-                  <p className="text-xs text-slate-400 mb-1">
-                    {typeLabels[notif.type] || notif.type}
-                  </p>
-                  <p className={`text-sm ${!notif.isRead ? 'font-semibold text-slate-900 dark:text-white' : 'text-slate-700 dark:text-slate-300'}`}>
-                    {notif.title}
-                  </p>
-                  <p className="text-sm text-slate-500 mt-0.5">{notif.message}</p>
-                  <p className="text-xs text-slate-400 mt-1">{formatDateTime(notif.createdAt)}</p>
+                <div className="flex items-start gap-4">
+                  <div className="flex-1">
+                    <p className="text-xs text-slate-400 mb-1">
+                      {typeLabels[notif.type] || notif.type}
+                    </p>
+                    <p className={`text-sm ${!notif.isRead ? 'font-semibold text-slate-900 dark:text-white' : 'text-slate-700 dark:text-slate-300'}`}>
+                      {notif.title}
+                    </p>
+                    <p className="text-sm text-slate-500 mt-0.5">{notif.message}</p>
+                    <p className="text-xs text-slate-400 mt-1">{formatDateTime(notif.createdAt)}</p>
+                  </div>
+                  {!notif.isRead && (
+                    <span className="shrink-0 w-2.5 h-2.5 mt-2 rounded-full bg-primary" />
+                  )}
                 </div>
-                {!notif.isRead && (
-                  <button
-                    onClick={() => markReadMutation.mutate(notif.id)}
-                    className="shrink-0 p-1.5 text-primary hover:bg-primary/10 rounded transition"
-                    title="Đánh dấu đã đọc"
-                  >
-                    <Check className="w-4 h-4" />
-                  </button>
-                )}
-              </div>
+              </Link>
             ))}
           </div>
         )}
