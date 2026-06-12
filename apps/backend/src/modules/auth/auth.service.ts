@@ -53,6 +53,16 @@ export class AuthService {
       data: { lastLoginAt: new Date() },
     });
 
+    // Log login
+    await this.prisma.auditLog.create({
+      data: {
+        userId: user.id,
+        action: 'LOGIN',
+        resource: 'auth',
+        resourceId: user.id,
+      },
+    });
+
     const payload: JwtPayload = {
       sub: user.id,
       email: user.email,

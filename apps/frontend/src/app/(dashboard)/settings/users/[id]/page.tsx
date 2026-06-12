@@ -6,7 +6,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import Link from 'next/link'
 import api from '@/lib/api'
 import { toast } from 'sonner'
-import { ArrowLeft, User, Save, Key, Shield, Building2 } from 'lucide-react'
+import { formatDateTime } from '@/lib/utils'
+import { ArrowLeft, User, Save, Key, Shield, Building2, History } from 'lucide-react'
 
 export default function UserDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -275,6 +276,82 @@ export default function UserDetailPage() {
           </div>
         )}
       </div>
+
+      {/* Audit Logs */}
+      <AuditLogSection userId={id} />
+    </div>
+  )
+}
+
+function AuditLogSection({ userId }: { userId: string }) {
+  const { data, isLoading } = useQuery({
+    queryKey: ['audit-logs', userId],
+    queryFn: async () => {
+      const { data } = await api.get(`/audit-logs/user/${userId}`, { params: { limit: 30 } })
+      return data
+    },
+  })
+
+  const actionLabels: Record<string, { label: string; color: string }> = {
+    LOGIN: { label: 'Đăng nhập', color: 'bg-blue-100 text-blue-700' },
+    CREATE: { label: 'Tạo mới', color: 'bg-emerald-100 text-emerald-700' },
+    UPDATE: { label: 'Cập nhật', color: 'bg-amber-100 text-amber-700' },
+    DELETE: { label: 'Xóa', color: 'bg-red-100 text-red-700' },
+    APPROVE: { label: 'Duyệt', color: 'bg-purple-100 text-purple-700' },
+    REJECT: { label: 'Từ chối', color: 'bg-red-100 text-red-700' },
+  }
+
+  const resourceLabels: Record<string, string> = {
+    auth: 'Xác thực',
+    vehicles: 'Xe',
+    workshop_jobs: 'Công việc xưởng',
+    repair_orders: 'Phiếu sửa chữa',
+    fleet_incidents: 'Sự cố',
+    maintenance: 'Bảo dưỡng',
+    users: 'Tài khoản',
+  }
+
+  return (
+    <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6">
+      <h3 className="font-semibold text-slate-900 dark:text-white flex items-center gap-2 mb-4">
+        <History className="w-5 h-5" />Lịch sử thao tác
+      </h3>
+
+      {isLoading ? (
+        <div className="animate-pulse space-y-2">
+          {[1,2,3].map(i => <div key={i} className="h-10 bg-slate-200 dark:bg-slate-700 rounded" />)}
+        </div>
+      ) : !data?.data?.length ? (
+        <p className="text-sm text-slate-400 text-center py-6">Chưa có lịch sử thao tác</p>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-slate-200 dark:border-slate-700">
+                <th className="text-left py-2 font-medium text-slate-500">Thời gian</th>
+                <th className="text-left py-2 font-medium text-slate-500">Hành động</th>
+                <th className="text-left py-2 font-medium text-slate-500">Tài nguyên</th>
+                <th className="text-left py-2 font-medium text-slate-500">IP</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-700/50">
+              {data.data.map((log: any) => {
+                const act = actionLabels[log.action] || { label: log.action, color: 'bg-slate-100 text-slate-600' }
+                return (
+                  <tr key={log.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/30">
+                    <td className="py-2.5 text-slate-600 dark:text-slate-300 text-xs">{formatDateTime(log.createdAt)}</td>
+                    <td className="py-2.5">
+                      <span className={`inline-flex px-2 py-0.5 rounded text-xs font-medium ${act.color}`}>{act.label}</span>
+                    </td>
+                    <td className="py-2.5 text-slate-600 dark:text-slate-300 text-xs">{resourceLabels[log.resource] || log.resource}</td>
+                    <td className="py-2.5 text-slate-400 text-xs font-mono">{log.ipAddress || '—'}</td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   )
 }
