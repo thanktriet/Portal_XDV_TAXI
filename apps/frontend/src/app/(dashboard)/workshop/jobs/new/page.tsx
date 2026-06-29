@@ -122,7 +122,7 @@ export default function NewWorkshopJobPage() {
   }
 
   const advisors = users?.filter((u: any) =>
-    ['CO_VAN_DICH_VU', 'QUAN_LY_XUONG', 'SUPER_ADMIN'].includes(u.role)
+    ['CO_VAN_DICH_VU', 'QUAN_LY_XUONG', 'SUPER_ADMIN'].includes(u.role?.code || u.role)
   )
 
   const isMaintenance = !!prePlanId
