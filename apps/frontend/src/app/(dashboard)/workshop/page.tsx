@@ -12,7 +12,19 @@ import {
   FileText,
   DollarSign,
   Search as SearchIcon,
+  Timer,
 } from 'lucide-react'
+import Link from 'next/link'
+
+function timeAgo(date: string): string {
+  const diff = Date.now() - new Date(date).getTime()
+  const mins = Math.floor(diff / 60000)
+  if (mins < 60) return `${mins} phút trước`
+  const hours = Math.floor(mins / 60)
+  if (hours < 24) return `${hours} giờ trước`
+  const days = Math.floor(hours / 24)
+  return `${days} ngày trước`
+}
 
 function KpiCard({
   title,
@@ -140,12 +152,93 @@ export default function WorkshopDashboardPage() {
           color="bg-primary"
         />
         <KpiCard
+          title="Quá 3 ngày chưa xong"
+          value={formatNumber(stats.overdueJobs?.length || 0)}
+          icon={Timer}
+          color="bg-orange-500"
+        />
+        <KpiCard
+          title="24h chưa cập nhật"
+          value={formatNumber(stats.staleJobs?.length || 0)}
+          icon={Clock}
+          color="bg-amber-500"
+        />
+        <KpiCard
           title="Doanh thu tháng"
           value={formatCurrency(stats.revenueThisMonth)}
           icon={DollarSign}
           color="bg-success"
         />
       </div>
+
+      {/* Cảnh báo: jobs quá 3 ngày & jobs 24h chưa cập nhật */}
+      {(stats.overdueJobs?.length > 0 || stats.staleJobs?.length > 0) && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Quá 3 ngày chưa hoàn thành */}
+          <div className="bg-white dark:bg-slate-800 rounded-xl border border-orange-200 dark:border-orange-900/40 overflow-hidden">
+            <div className="px-5 py-3.5 border-b border-slate-200 dark:border-slate-700 flex items-center gap-2 bg-orange-50/60 dark:bg-orange-900/10">
+              <Timer className="w-5 h-5 text-orange-600" />
+              <h3 className="text-base font-semibold text-slate-900 dark:text-white">
+                Cảnh báo — quá 3 ngày chưa xong
+              </h3>
+              <span className="ml-auto text-xs font-medium text-orange-700 bg-orange-100 dark:bg-orange-900/30 dark:text-orange-300 px-2 py-0.5 rounded-full">
+                {stats.overdueJobs.length}
+              </span>
+            </div>
+            {stats.overdueJobs?.length > 0 ? (
+              <div className="divide-y divide-slate-100 dark:divide-slate-700/50 max-h-80 overflow-y-auto">
+                {stats.overdueJobs.map((job: any) => (
+                  <Link key={job.id} href={`/workshop/jobs/${job.id}`} className="flex items-center gap-3 px-5 py-3 hover:bg-slate-50 dark:hover:bg-slate-700/40 transition">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium text-primary">{job.code}</span>
+                        <span className="text-sm text-slate-600 dark:text-slate-300">{job.vehicle?.licensePlate}</span>
+                        <span className={`text-xs px-2 py-0.5 rounded-full ${statusColors[job.status] || ''}`}>{statusLabels[job.status] || job.status}</span>
+                      </div>
+                      <p className="text-xs text-slate-400 mt-0.5 truncate">{job.entryReason}</p>
+                    </div>
+                    <span className="shrink-0 text-xs text-orange-600 font-medium">Vào xưởng {timeAgo(job.receivedAt)}</span>
+                  </Link>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-slate-400 text-center py-6">Không có xe nào quá hạn</p>
+            )}
+          </div>
+
+          {/* 24h chưa cập nhật */}
+          <div className="bg-white dark:bg-slate-800 rounded-xl border border-amber-200 dark:border-amber-900/40 overflow-hidden">
+            <div className="px-5 py-3.5 border-b border-slate-200 dark:border-slate-700 flex items-center gap-2 bg-amber-50/60 dark:bg-amber-900/10">
+              <Clock className="w-5 h-5 text-amber-600" />
+              <h3 className="text-base font-semibold text-slate-900 dark:text-white">
+                24h chưa cập nhật tiến độ
+              </h3>
+              <span className="ml-auto text-xs font-medium text-amber-700 bg-amber-100 dark:bg-amber-900/30 dark:text-amber-300 px-2 py-0.5 rounded-full">
+                {stats.staleJobs.length}
+              </span>
+            </div>
+            {stats.staleJobs?.length > 0 ? (
+              <div className="divide-y divide-slate-100 dark:divide-slate-700/50 max-h-80 overflow-y-auto">
+                {stats.staleJobs.map((job: any) => (
+                  <Link key={job.id} href={`/workshop/jobs/${job.id}`} className="flex items-center gap-3 px-5 py-3 hover:bg-slate-50 dark:hover:bg-slate-700/40 transition">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium text-primary">{job.code}</span>
+                        <span className="text-sm text-slate-600 dark:text-slate-300">{job.vehicle?.licensePlate}</span>
+                        <span className={`text-xs px-2 py-0.5 rounded-full ${statusColors[job.status] || ''}`}>{statusLabels[job.status] || job.status}</span>
+                      </div>
+                      <p className="text-xs text-slate-400 mt-0.5 truncate">{job.entryReason}</p>
+                    </div>
+                    <span className="shrink-0 text-xs text-amber-600 font-medium">Cập nhật {timeAgo(job.updatedAt)}</span>
+                  </Link>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-slate-400 text-center py-6">Tất cả đều được cập nhật gần đây</p>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Recent Jobs */}
       {stats.recentJobs?.length > 0 && (

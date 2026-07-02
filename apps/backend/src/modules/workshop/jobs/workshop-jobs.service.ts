@@ -6,9 +6,12 @@ import {
 } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { PrismaService } from '../../../database/prisma.service';
+import { AuditLogService } from '../../audit-logs/audit-log.service';
+import { RequestContextService } from '../../../common/context/request-context.service';
 import { WorkshopJobStatus } from '@prisma/client';
 import { CreateWorkshopJobDto } from './dto/create-job.dto';
 import { UpdateJobStatusDto } from './dto/update-job-status.dto';
+import { UpdateJobInfoDto } from './dto/update-job-info.dto';
 import { QueryJobsDto } from './dto/query-jobs.dto';
 import { JwtPayload } from '../../auth/auth.service';
 
@@ -30,6 +33,8 @@ export class WorkshopJobsService {
   constructor(
     private prisma: PrismaService,
     private eventEmitter: EventEmitter2,
+    private auditLogService: AuditLogService,
+    private requestContextService: RequestContextService,
   ) {}
 
   async create(dto: CreateWorkshopJobDto) {
@@ -126,6 +131,7 @@ export class WorkshopJobsService {
         branch: true,
         advisor: { omit: { passwordHash: true } },
         technician: true,
+        settlementFile: true,
         repairOrders: { include: { items: true } },
         statusHistory: {
           orderBy: { createdAt: 'desc' },
@@ -202,6 +208,19 @@ export class WorkshopJobsService {
       }),
     ]);
 
+    // Audit log for status change
+    const ctx = this.requestContextService.getContext();
+    await this.auditLogService.log({
+      userId: user.sub,
+      action: 'JOB_STATUS_CHANGED',
+      resource: 'WorkshopJob',
+      resourceId: id,
+      oldData: { status: job.status },
+      newData: { status: dto.status },
+      ipAddress: ctx.ipAddress,
+      userAgent: ctx.userAgent,
+    });
+
     // If delivered, set vehicle back to ACTIVE
     if (dto.status === 'DELIVERED') {
       await this.prisma.vehicle.update({
@@ -242,7 +261,7 @@ export class WorkshopJobsService {
     const job = await this.prisma.workshopJob.findUnique({ where: { id } });
     if (!job) throw new NotFoundException('Workshop job không tồn tại');
 
-    return this.prisma.workshopJob.update({
+    const updated = await this.prisma.workshopJob.update({
       where: { id },
       data: { jobType: jobType as any },
       include: {
@@ -251,5 +270,68 @@ export class WorkshopJobsService {
         advisor: { omit: { passwordHash: true } },
       },
     });
+
+    // Audit log
+    const ctx = this.requestContextService.getContext();
+    await this.auditLogService.log({
+      userId: ctx.userId,
+      action: 'WORKSHOPJOB_UPDATED',
+      resource: 'WorkshopJob',
+      resourceId: id,
+      oldData: { jobType: job.jobType },
+      newData: { jobType },
+      ipAddress: ctx.ipAddress,
+      userAgent: ctx.userAgent,
+    });
+
+    return updated;
+  }
+
+  async updateInfo(id: string, dto: UpdateJobInfoDto, user: JwtPayload) {
+    const job = await this.prisma.workshopJob.findUnique({ where: { id } });
+    if (!job) throw new NotFoundException('Workshop job không tồn tại');
+
+    const data: any = {};
+
+    // dmsRef chỉ nhập 1 lần — sau khi đã có thì khoá, chỉ admin/giám đốc được sửa lại
+    if (dto.dmsRef !== undefined) {
+      const ADMIN_ROLES = ['SUPER_ADMIN', 'GIAM_DOC_HAU_MAI'];
+      if (job.dmsRef && !ADMIN_ROLES.includes(user.role)) {
+        throw new ForbiddenException(
+          'Mã lệnh DMS đã được nhập và chỉ Giám đốc/Quản trị mới có thể chỉnh sửa',
+        );
+      }
+      data.dmsRef = dto.dmsRef.trim() || null;
+    }
+
+    if (dto.settlementFileId !== undefined) {
+      data.settlementFileId = dto.settlementFileId || null;
+    }
+
+    const updated = await this.prisma.workshopJob.update({
+      where: { id },
+      data,
+      include: {
+        vehicle: { include: { model: true } },
+        branch: true,
+        advisor: { omit: { passwordHash: true } },
+        technician: true,
+        settlementFile: true,
+      },
+    });
+
+    const ctx = this.requestContextService.getContext();
+    await this.auditLogService.log({
+      userId: user.sub,
+      action: 'WORKSHOPJOB_UPDATED',
+      resource: 'WorkshopJob',
+      resourceId: id,
+      oldData: { dmsRef: job.dmsRef, settlementFileId: job.settlementFileId },
+      newData: data,
+      ipAddress: ctx.ipAddress,
+      userAgent: ctx.userAgent,
+    });
+
+    return updated;
   }
 }

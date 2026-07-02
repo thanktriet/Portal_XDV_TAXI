@@ -10,11 +10,34 @@ import {
   ArrowLeft, Car, MapPin, Gauge, Calendar, Wrench,
   ArrowRightLeft, Plus, Package, AlertTriangle,
   ClipboardList, Hash, FileText, TrendingUp, User,
+  ShieldCheck, Upload, Loader2, Trash2, Download, Pencil, Check,
 } from 'lucide-react'
 import Link from 'next/link'
 import { useAuthStore } from '@/stores/auth.store'
 
 const VEHICLE_WRITE_ROLES = ['SUPER_ADMIN', 'GIAM_DOC_HAU_MAI', 'QUAN_LY_XUONG', 'QUAN_LY_DOI_XE']
+
+const DOC_CATEGORY_LABELS: Record<string, string> = {
+  REGISTRATION: 'Đăng ký xe',
+  INSPECTION:   'Đăng kiểm',
+  INSURANCE:    'Bảo hiểm',
+  OTHER:        'Khác',
+}
+
+const DOC_CATEGORY_ORDER = ['REGISTRATION', 'INSPECTION', 'INSURANCE', 'OTHER']
+
+// Trạng thái hạn: đỏ nếu đã hết, cam nếu còn <=30 ngày, xanh nếu còn hạn
+function expiryStatus(date?: string | null): { label: string; cls: string } | null {
+  if (!date) return null
+  const now = new Date()
+  now.setHours(0, 0, 0, 0)
+  const target = new Date(date)
+  target.setHours(0, 0, 0, 0)
+  const days = Math.round((target.getTime() - now.getTime()) / 86400000)
+  if (days < 0) return { label: `Quá hạn ${Math.abs(days)} ngày`, cls: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300' }
+  if (days <= 30) return { label: `Còn ${days} ngày`, cls: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300' }
+  return { label: `Còn ${days} ngày`, cls: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300' }
+}
 
 const statusConfig: Record<string, { label: string; color: string }> = {
   ACTIVE:        { label: 'Hoạt động',   color: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300' },
@@ -53,6 +76,7 @@ const maintenanceStatusConfig: Record<string, { label: string; color: string }> 
 
 const TABS = [
   { key: 'overview',     label: 'Tổng quan',       icon: Car },
+  { key: 'documents',    label: 'Giấy tờ',          icon: FileText },
   { key: 'maintenance',  label: 'Bảo dưỡng',       icon: Wrench },
   { key: 'workshop',     label: 'Sửa chữa',         icon: ClipboardList },
   { key: 'incidents',    label: 'Sự cố',            icon: AlertTriangle },
@@ -78,6 +102,10 @@ export default function VehicleDetailPage() {
   const [activeTab, setActiveTab] = useState('overview')
   const [showOdoForm, setShowOdoForm] = useState(false)
   const [newOdo, setNewOdo] = useState('')
+  const [docCategory, setDocCategory] = useState('REGISTRATION')
+  const [uploadingDoc, setUploadingDoc] = useState(false)
+  const [editingDates, setEditingDates] = useState(false)
+  const [dateForm, setDateForm] = useState({ inspectionExpiry: '', insuranceExpiry: '', ownerName: '', driverCode: '', driverName: '', driverPhone: '' })
 
   const { data: vehicle, isLoading } = useQuery({
     queryKey: ['vehicles', id],
@@ -148,6 +176,66 @@ export default function VehicleDetailPage() {
     },
   })
 
+  const datesMutation = useMutation({
+    mutationFn: async (payload: { inspectionExpiry?: string | null; insuranceExpiry?: string | null; ownerName?: string | null; driverCode?: string | null; driverName?: string | null; driverPhone?: string | null }) => {
+      const { data } = await api.patch(`/vehicles/${id}`, payload)
+      return data
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['vehicles', id] })
+      toast.success('Đã cập nhật hạn')
+      setEditingDates(false)
+    },
+    onError: (err: any) => {
+      toast.error(err.response?.data?.message || 'Lỗi cập nhật hạn')
+    },
+  })
+
+  const deleteDocMutation = useMutation({
+    mutationFn: async (docId: string) => {
+      await api.delete(`/vehicles/${id}/documents/${docId}`)
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['vehicles', id] })
+      toast.success('Đã xoá giấy tờ')
+    },
+    onError: (err: any) => {
+      toast.error(err.response?.data?.message || 'Lỗi xoá giấy tờ')
+    },
+  })
+
+  const handleUploadDoc = async (file: File) => {
+    setUploadingDoc(true)
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+      const { data } = await api.post('/files/upload', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      })
+      await api.post(`/vehicles/${id}/documents`, { fileId: data.id, category: docCategory })
+      queryClient.invalidateQueries({ queryKey: ['vehicles', id] })
+      toast.success('Đã tải lên giấy tờ')
+    } catch {
+      toast.error('Lỗi tải lên giấy tờ')
+    } finally {
+      setUploadingDoc(false)
+    }
+  }
+
+  // Endpoint /files/:id yêu cầu JWT trong header, nên phải tải qua axios (có token)
+  // rồi mở bằng blob URL — không thể dùng <a href> trực tiếp (sẽ bị 401).
+  const openFile = async (fileId: string) => {
+    try {
+      const res = await api.get(`/files/${fileId}`, { responseType: 'blob' })
+      const url = window.URL.createObjectURL(res.data)
+      window.open(url, '_blank')
+      // Thu hồi URL sau khi tab mới đã có thời gian nạp
+      setTimeout(() => window.URL.revokeObjectURL(url), 60000)
+    } catch {
+      toast.error('Không mở được file')
+    }
+  }
+
   if (isLoading) {
     return (
       <div className="animate-pulse space-y-6">
@@ -193,7 +281,27 @@ export default function VehicleDetailPage() {
 
       {/* Hồ sơ xe */}
       <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-5">
-        <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-4">Hồ sơ xe</h3>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wide">Hồ sơ xe</h3>
+          {canWrite && !editingDates && (
+            <button
+              onClick={() => {
+                setDateForm({
+                  inspectionExpiry: vehicle.inspectionExpiry ? String(vehicle.inspectionExpiry).slice(0, 10) : '',
+                  insuranceExpiry: vehicle.insuranceExpiry ? String(vehicle.insuranceExpiry).slice(0, 10) : '',
+                  ownerName: vehicle.ownerName || '',
+                  driverCode: vehicle.driverCode || '',
+                  driverName: vehicle.driverName || '',
+                  driverPhone: vehicle.driverPhone || '',
+                })
+                setEditingDates(true)
+              }}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium border border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-300 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition"
+            >
+              <Pencil className="w-3.5 h-3.5" /> Chỉnh sửa
+            </button>
+          )}
+        </div>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
           <div>
             <p className="text-xs text-slate-400 mb-1 flex items-center gap-1"><Car className="w-3.5 h-3.5" /> Model</p>
@@ -218,12 +326,137 @@ export default function VehicleDetailPage() {
             <p className="font-semibold text-slate-900 dark:text-white text-sm font-mono text-xs">{vehicle.vin}</p>
           </div>
           <div>
+            <p className="text-xs text-slate-400 mb-1 flex items-center gap-1"><User className="w-3.5 h-3.5" /> Đơn vị sở hữu</p>
+            {editingDates ? (
+              <input
+                type="text"
+                value={dateForm.ownerName}
+                onChange={(e) => setDateForm({ ...dateForm, ownerName: e.target.value })}
+                placeholder="VD: Công ty TNHH Taxi ABC"
+                className="w-full px-2 py-1 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-sm outline-none focus:ring-2 focus:ring-primary/20"
+              />
+            ) : (
+              <p className="font-semibold text-slate-900 dark:text-white text-sm">
+                {vehicle.ownerName || '—'}
+              </p>
+            )}
+          </div>
+          <div>
+            <p className="text-xs text-slate-400 mb-1 flex items-center gap-1"><Hash className="w-3.5 h-3.5" /> Số tài</p>
+            {editingDates ? (
+              <input
+                type="text"
+                value={dateForm.driverCode}
+                onChange={(e) => setDateForm({ ...dateForm, driverCode: e.target.value })}
+                placeholder="VD: 1234"
+                className="w-full px-2 py-1 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-sm outline-none focus:ring-2 focus:ring-primary/20"
+              />
+            ) : (
+              <p className="font-semibold text-slate-900 dark:text-white text-sm">
+                {vehicle.driverCode || '—'}
+              </p>
+            )}
+          </div>
+          <div>
+            <p className="text-xs text-slate-400 mb-1 flex items-center gap-1"><User className="w-3.5 h-3.5" /> Tài xế</p>
+            {editingDates ? (
+              <input
+                type="text"
+                value={dateForm.driverName}
+                onChange={(e) => setDateForm({ ...dateForm, driverName: e.target.value })}
+                placeholder="VD: Nguyễn Văn A"
+                className="w-full px-2 py-1 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-sm outline-none focus:ring-2 focus:ring-primary/20"
+              />
+            ) : (
+              <p className="font-semibold text-slate-900 dark:text-white text-sm">
+                {vehicle.driverName || '—'}
+              </p>
+            )}
+          </div>
+          <div>
+            <p className="text-xs text-slate-400 mb-1 flex items-center gap-1"><User className="w-3.5 h-3.5" /> SĐT tài xế</p>
+            {editingDates ? (
+              <input
+                type="text"
+                value={dateForm.driverPhone}
+                onChange={(e) => setDateForm({ ...dateForm, driverPhone: e.target.value })}
+                placeholder="VD: 0912345678"
+                className="w-full px-2 py-1 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-sm outline-none focus:ring-2 focus:ring-primary/20"
+              />
+            ) : (
+              <p className="font-semibold text-slate-900 dark:text-white text-sm">
+                {vehicle.driverPhone || '—'}
+              </p>
+            )}
+          </div>
+          <div>
             <p className="text-xs text-slate-400 mb-1 flex items-center gap-1"><FileText className="w-3.5 h-3.5" /> Đăng ký</p>
             <p className="font-semibold text-slate-900 dark:text-white text-sm">
               {vehicle.registeredAt ? formatDate(vehicle.registeredAt) : '—'}
             </p>
           </div>
+          <div>
+            <p className="text-xs text-slate-400 mb-1 flex items-center gap-1"><ShieldCheck className="w-3.5 h-3.5" /> Hạn đăng kiểm</p>
+            {editingDates ? (
+              <input
+                type="date"
+                value={dateForm.inspectionExpiry}
+                onChange={(e) => setDateForm({ ...dateForm, inspectionExpiry: e.target.value })}
+                className="w-full px-2 py-1 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-sm outline-none focus:ring-2 focus:ring-primary/20"
+              />
+            ) : (
+              <>
+                <p className="font-semibold text-slate-900 dark:text-white text-sm">
+                  {vehicle.inspectionExpiry ? formatDate(vehicle.inspectionExpiry) : '—'}
+                </p>
+                {(() => { const s = expiryStatus(vehicle.inspectionExpiry); return s ? <span className={`inline-flex mt-1 px-2 py-0.5 rounded-full text-xs font-medium ${s.cls}`}>{s.label}</span> : null })()}
+              </>
+            )}
+          </div>
+          <div>
+            <p className="text-xs text-slate-400 mb-1 flex items-center gap-1"><ShieldCheck className="w-3.5 h-3.5" /> Hạn bảo hiểm</p>
+            {editingDates ? (
+              <input
+                type="date"
+                value={dateForm.insuranceExpiry}
+                onChange={(e) => setDateForm({ ...dateForm, insuranceExpiry: e.target.value })}
+                className="w-full px-2 py-1 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-sm outline-none focus:ring-2 focus:ring-primary/20"
+              />
+            ) : (
+              <>
+                <p className="font-semibold text-slate-900 dark:text-white text-sm">
+                  {vehicle.insuranceExpiry ? formatDate(vehicle.insuranceExpiry) : '—'}
+                </p>
+                {(() => { const s = expiryStatus(vehicle.insuranceExpiry); return s ? <span className={`inline-flex mt-1 px-2 py-0.5 rounded-full text-xs font-medium ${s.cls}`}>{s.label}</span> : null })()}
+              </>
+            )}
+          </div>
         </div>
+
+        {editingDates && (
+          <div className="flex gap-2 mt-4 pt-4 border-t border-slate-200 dark:border-slate-700">
+            <button
+              onClick={() => datesMutation.mutate({
+                inspectionExpiry: dateForm.inspectionExpiry || null,
+                insuranceExpiry: dateForm.insuranceExpiry || null,
+                ownerName: dateForm.ownerName.trim() || null,
+                driverCode: dateForm.driverCode.trim() || null,
+                driverName: dateForm.driverName.trim() || null,
+                driverPhone: dateForm.driverPhone.trim() || null,
+              })}
+              disabled={datesMutation.isPending}
+              className="flex items-center gap-1.5 px-4 py-2 text-sm bg-primary hover:bg-primary/90 text-white rounded-lg font-medium transition disabled:opacity-50"
+            >
+              <Check className="w-4 h-4" />{datesMutation.isPending ? 'Đang lưu...' : 'Lưu thay đổi'}
+            </button>
+            <button
+              onClick={() => setEditingDates(false)}
+              className="px-4 py-2 text-sm border border-slate-300 dark:border-slate-600 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition"
+            >
+              Hủy
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Tabs */}
@@ -248,6 +481,93 @@ export default function VehicleDetailPage() {
 
         {/* Tab content */}
         <div className="p-5">
+
+          {/* ── GIẤY TỜ ── */}
+          {activeTab === 'documents' && (
+            <div className="space-y-5">
+              {canWrite && (
+                <div className="flex flex-wrap items-end gap-3 p-4 bg-slate-50 dark:bg-slate-700/30 rounded-xl">
+                  <div>
+                    <label className="block text-xs text-slate-500 mb-1">Loại giấy tờ</label>
+                    <select
+                      value={docCategory}
+                      onChange={(e) => setDocCategory(e.target.value)}
+                      className="px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-sm outline-none focus:ring-2 focus:ring-primary/20"
+                    >
+                      {DOC_CATEGORY_ORDER.map((c) => (
+                        <option key={c} value={c}>{DOC_CATEGORY_LABELS[c]}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <label className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary/90 text-white text-sm font-medium rounded-lg transition">
+                    {uploadingDoc ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                    {uploadingDoc ? 'Đang tải lên...' : 'Tải giấy tờ (PDF/ảnh)'}
+                    <input
+                      type="file"
+                      accept="application/pdf,image/*"
+                      className="hidden"
+                      disabled={uploadingDoc}
+                      onChange={(e) => { const f = e.target.files?.[0]; if (f) handleUploadDoc(f); e.target.value = '' }}
+                    />
+                  </label>
+                </div>
+              )}
+
+              {vehicle.documents?.length > 0 ? (
+                <div className="space-y-5">
+                  {DOC_CATEGORY_ORDER.map((cat) => {
+                    const docs = vehicle.documents.filter((d: any) => d.category === cat)
+                    if (docs.length === 0) return null
+                    return (
+                      <div key={cat}>
+                        <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2 flex items-center gap-2">
+                          <FileText className="w-4 h-4" />{DOC_CATEGORY_LABELS[cat]}
+                          <span className="text-xs text-slate-400 font-normal">({docs.length})</span>
+                        </h4>
+                        <div className="space-y-2">
+                          {docs.map((doc: any) => (
+                            <div key={doc.id} className="flex items-center gap-3 p-3 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/30 transition">
+                              <FileText className="w-4 h-4 text-slate-400 shrink-0" />
+                              <button
+                                onClick={() => openFile(doc.file?.id)}
+                                className="flex-1 min-w-0 text-sm text-primary hover:underline truncate text-left"
+                                title={doc.file?.originalName}
+                              >
+                                {doc.file?.originalName}
+                              </button>
+                              <span className="text-xs text-slate-400 shrink-0">{formatDate(doc.createdAt)}</span>
+                              <button
+                                onClick={() => openFile(doc.file?.id)}
+                                className="text-slate-400 hover:text-primary transition shrink-0"
+                                title="Xem / tải xuống"
+                              >
+                                <Download className="w-4 h-4" />
+                              </button>
+                              {canWrite && (
+                                <button
+                                  onClick={() => deleteDocMutation.mutate(doc.id)}
+                                  disabled={deleteDocMutation.isPending}
+                                  className="text-slate-400 hover:text-danger transition shrink-0 disabled:opacity-40"
+                                  title="Xoá"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              ) : (
+                <div className="text-center py-12 text-slate-400">
+                  <FileText className="w-10 h-10 mx-auto mb-2 opacity-30" />
+                  <p>Chưa có giấy tờ nào</p>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* ── TỔNG QUAN ── */}
           {activeTab === 'overview' && (

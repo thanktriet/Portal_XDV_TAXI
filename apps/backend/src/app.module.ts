@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { DatabaseModule } from './database/database.module';
+import { RequestContextModule } from './common/context/request-context.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
 import { BranchesModule } from './modules/branches/branches.module';
@@ -20,6 +21,7 @@ import { AuditLogsModule } from './modules/audit-logs/audit-logs.module';
     ConfigModule.forRoot({ isGlobal: true }),
     EventEmitterModule.forRoot(),
     DatabaseModule,
+    RequestContextModule,
     AuthModule,
     UsersModule,
     BranchesModule,

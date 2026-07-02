@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, Suspense } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useState, useEffect, Suspense } from 'react'
+import { useRouter } from 'next/navigation'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import api from '@/lib/api'
 import { toast } from 'sonner'
@@ -15,6 +15,7 @@ function NewRequisitionForm() {
   const queryClient = useQueryClient()
 
   const [note, setNote] = useState('')
+  const [fromBranchId, setFromBranchId] = useState('')
   const [toBranchId, setToBranchId] = useState('')
   const [lines, setLines] = useState<{ partId: string; requestedQty: number; note: string }[]>([
     { partId: '', requestedQty: 1, note: '' },
@@ -29,14 +30,23 @@ function NewRequisitionForm() {
   })
 
   const hqBranches = branches?.filter((b: any) => b.type === 'WORKSHOP')
-  const fromBranchId = user?.branchId || ''
+  const fleetBranches = branches?.filter((b: any) => b.type === 'FLEET')
+  const userBranch = branches?.find((b: any) => b.id === user?.branchId)
+
+  // Set initial fromBranchId when branches load and user has no branchId (SUPER_ADMIN)
+  useEffect(() => {
+    if (branches && !user?.branchId && !fromBranchId) {
+      // SUPER_ADMIN with no branchId - leave empty so they can select
+    } else if (branches && user?.branchId && !fromBranchId) {
+      setFromBranchId(user.branchId)
+    }
+  }, [branches, user?.branchId])
 
   const { data: hqParts } = useQuery({
     queryKey: ['parts', { branchId: toBranchId }],
     enabled: !!toBranchId,
     queryFn: async () => {
       const { data } = await api.get(`/workshop/parts?branchId=${toBranchId}&limit=200`)
-      // Normalize: attach stockQty from stocks[0] for easy access
       return data.data.map((p: any) => ({
         ...p,
         stockQty: p.stocks?.[0]?.stockQty ?? 0,
@@ -61,6 +71,7 @@ function NewRequisitionForm() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+    if (!fromBranchId) return toast.error('Vui lòng chọn chi nhánh yêu cầu')
     if (!toBranchId) return toast.error('Vui lòng chọn kho cấp phát')
     if (lines.some((l) => !l.partId)) return toast.error('Vui lòng chọn phụ tùng cho tất cả các dòng')
     createMutation.mutate({ fromBranchId, toBranchId, note, lines })
@@ -79,10 +90,24 @@ function NewRequisitionForm() {
         <form onSubmit={handleSubmit} className="space-y-5">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Chi nhánh yêu cầu</label>
-              <div className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/50 text-sm text-slate-700 dark:text-slate-300">
-                {branches?.find((b: any) => b.id === fromBranchId)?.name || 'Chi nhánh của bạn'}
-              </div>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Chi nhánh yêu cầu *</label>
+              {userBranch ? (
+                <div className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/50 text-sm text-slate-700 dark:text-slate-300">
+                  {userBranch.name}
+                </div>
+              ) : (
+                <select
+                  value={fromBranchId}
+                  onChange={(e) => setFromBranchId(e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-sm outline-none focus:ring-2 focus:ring-primary/20"
+                  required
+                >
+                  <option value="">Chọn chi nhánh yêu cầu</option>
+                  {fleetBranches?.map((b: any) => (
+                    <option key={b.id} value={b.id}>{b.name}</option>
+                  ))}
+                </select>
+              )}
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Kho cấp phát (HQ) *</label>
@@ -111,7 +136,6 @@ function NewRequisitionForm() {
             />
           </div>
 
-          {/* Lines */}
           <div>
             <div className="flex items-center justify-between mb-2">
               <p className="text-sm font-medium text-slate-700 dark:text-slate-300">Danh sách phụ tùng yêu cầu *</p>

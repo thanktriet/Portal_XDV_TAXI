@@ -32,6 +32,20 @@ const statusColors: Record<string, string> = {
   DELIVERED: 'bg-slate-100 text-slate-500',
 }
 
+const jobTypeLabels: Record<string, string> = {
+  REPAIR: 'Sửa chữa',
+  WARRANTY: 'Bảo hành',
+  MAINTENANCE: 'Bảo dưỡng',
+  INSPECTION: 'Kiểm tra',
+}
+
+const jobTypeColors: Record<string, string> = {
+  REPAIR: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300',
+  WARRANTY: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
+  MAINTENANCE: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300',
+  INSPECTION: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300',
+}
+
 const WORKFLOW_STEPS = [
   'RECEIVED', 'DIAGNOSING', 'QUOTED', 'APPROVED',
   'WAITING_PARTS', 'IN_PROGRESS', 'QUALITY_CHECK', 'COMPLETED', 'DELIVERED',
@@ -57,16 +71,18 @@ function WorkflowStepper({ currentStatus }: { currentStatus: string }) {
 export default function WorkshopJobsPage() {
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
+  const [typeFilter, setTypeFilter] = useState('')
   const [page, setPage] = useState(1)
 
   const { data, isLoading } = useQuery({
-    queryKey: ['workshop', 'jobs', { search, status: statusFilter, page }],
+    queryKey: ['workshop', 'jobs', { search, status: statusFilter, type: typeFilter, page }],
     queryFn: async () => {
       const params = new URLSearchParams()
       params.set('page', page.toString())
       params.set('limit', '20')
       if (search) params.set('search', search)
       if (statusFilter) params.set('status', statusFilter)
+      if (typeFilter) params.set('jobType', typeFilter)
       const { data } = await api.get(`/workshop/jobs?${params}`)
       return data
     },
@@ -110,6 +126,16 @@ export default function WorkshopJobsPage() {
               <option key={key} value={key}>{label}</option>
             ))}
           </select>
+          <select
+            value={typeFilter}
+            onChange={(e) => { setTypeFilter(e.target.value); setPage(1) }}
+            className="px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-sm outline-none focus:ring-2 focus:ring-primary/20"
+          >
+            <option value="">Tất cả phân loại</option>
+            {Object.entries(jobTypeLabels).map(([key, label]) => (
+              <option key={key} value={key}>{label}</option>
+            ))}
+          </select>
         </div>
       </div>
 
@@ -123,9 +149,9 @@ export default function WorkshopJobsPage() {
                 <th className="text-left px-4 py-3 font-medium text-slate-500">Xe</th>
                 <th className="text-left px-4 py-3 font-medium text-slate-500">Lý do vào xưởng</th>
                 <th className="text-left px-4 py-3 font-medium text-slate-500">Trạng thái</th>
+                <th className="text-left px-4 py-3 font-medium text-slate-500">Phân loại</th>
                 <th className="text-left px-4 py-3 font-medium text-slate-500">Tiến độ</th>
                 <th className="text-left px-4 py-3 font-medium text-slate-500">Ngày nhận</th>
-                <th className="text-left px-4 py-3 font-medium text-slate-500">BH</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
@@ -163,17 +189,19 @@ export default function WorkshopJobsPage() {
                       </span>
                     </td>
                     <td className="px-4 py-3">
+                      {job.jobType ? (
+                        <span className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium ${jobTypeColors[job.jobType] || 'bg-slate-100 text-slate-500'}`}>
+                          {jobTypeLabels[job.jobType] || job.jobType}
+                        </span>
+                      ) : (
+                        <span className="text-xs text-slate-400">—</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3">
                       <WorkflowStepper currentStatus={job.status} />
                     </td>
                     <td className="px-4 py-3 text-slate-600 dark:text-slate-300">
                       {formatDate(job.receivedAt)}
-                    </td>
-                    <td className="px-4 py-3">
-                      {job.isWarranty && (
-                        <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary">
-                          BH
-                        </span>
-                      )}
                     </td>
                   </tr>
                 ))

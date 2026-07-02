@@ -4,6 +4,7 @@ import {
   IsOptional,
   IsUUID,
   IsInt,
+  IsDateString,
   Min,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
@@ -32,6 +33,36 @@ export class CreateVehicleDto {
   @IsOptional()
   @IsString()
   registeredAt?: string;
+
+  @ApiPropertyOptional({ description: 'Đơn vị sở hữu xe (nhập tay)' })
+  @IsOptional()
+  @IsString()
+  ownerName?: string;
+
+  @ApiPropertyOptional({ description: 'Số tài xế đang chạy xe' })
+  @IsOptional()
+  @IsString()
+  driverCode?: string;
+
+  @ApiPropertyOptional({ description: 'Họ tên tài xế đang chạy xe' })
+  @IsOptional()
+  @IsString()
+  driverName?: string;
+
+  @ApiPropertyOptional({ description: 'Số điện thoại tài xế' })
+  @IsOptional()
+  @IsString()
+  driverPhone?: string;
+
+  @ApiPropertyOptional({ description: 'Hạn đăng kiểm (ISO date)' })
+  @IsOptional()
+  @IsDateString()
+  inspectionExpiry?: string;
+
+  @ApiPropertyOptional({ description: 'Hạn bảo hiểm (ISO date)' })
+  @IsOptional()
+  @IsDateString()
+  insuranceExpiry?: string;
 
   @ApiPropertyOptional({ example: 0 })
   @IsOptional()

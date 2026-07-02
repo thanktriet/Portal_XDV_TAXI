@@ -35,6 +35,42 @@ export class WorkshopDashboardService {
       },
     });
 
+    // Jobs chưa cập nhật trong 24h (đang xử lý nhưng "đứng im")
+    const oneDayAgo = new Date();
+    oneDayAgo.setHours(oneDayAgo.getHours() - 24);
+
+    const staleJobs = await this.prisma.workshopJob.findMany({
+      where: {
+        ...where,
+        updatedAt: { lt: oneDayAgo },
+        status: { notIn: ['COMPLETED', 'DELIVERED', 'REJECTED'] },
+      },
+      orderBy: { updatedAt: 'asc' },
+      take: 20,
+      include: {
+        vehicle: { include: { model: true } },
+        advisor: { omit: { passwordHash: true } },
+      },
+    });
+
+    // Cảnh báo: jobs vào xưởng quá 3 ngày mà chưa hoàn thành
+    const threeDaysAgo = new Date();
+    threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
+
+    const overdueJobs = await this.prisma.workshopJob.findMany({
+      where: {
+        ...where,
+        receivedAt: { lt: threeDaysAgo },
+        status: { notIn: ['COMPLETED', 'DELIVERED', 'REJECTED'] },
+      },
+      orderBy: { receivedAt: 'asc' },
+      take: 20,
+      include: {
+        vehicle: { include: { model: true } },
+        advisor: { omit: { passwordHash: true } },
+      },
+    });
+
     // Job type breakdown
     const warrantyCount = await this.prisma.workshopJob.count({
       where: { ...where, jobType: 'WARRANTY', status: { notIn: ['DELIVERED'] } },
@@ -80,6 +116,8 @@ export class WorkshopDashboardService {
       paidCount,
       revenueThisMonth: Number(revenue._sum.totalCost || 0),
       recentJobs,
+      staleJobs,
+      overdueJobs,
       statusBreakdown: statusCounts,
     };
   }

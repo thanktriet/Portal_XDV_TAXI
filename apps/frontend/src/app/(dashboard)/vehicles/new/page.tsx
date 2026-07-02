@@ -17,6 +17,12 @@ export default function NewVehiclePage() {
     yearMfg: new Date().getFullYear(),
     branchId: '',
     currentOdo: 0,
+    ownerName: '',
+    driverCode: '',
+    driverName: '',
+    driverPhone: '',
+    inspectionExpiry: '',
+    insuranceExpiry: '',
   })
 
   const { data: branches } = useQuery({
@@ -152,6 +158,76 @@ export default function NewVehiclePage() {
                 value={form.currentOdo}
                 onChange={(e) => setForm({ ...form, currentOdo: parseInt(e.target.value) || 0 })}
                 min={0}
+                className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-sm outline-none focus:ring-2 focus:ring-primary/20"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                Đơn vị sở hữu
+              </label>
+              <input
+                type="text"
+                value={form.ownerName}
+                onChange={(e) => setForm({ ...form, ownerName: e.target.value })}
+                placeholder="VD: Công ty TNHH Taxi ABC"
+                className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-sm outline-none focus:ring-2 focus:ring-primary/20"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                Số tài (tài xế)
+              </label>
+              <input
+                type="text"
+                value={form.driverCode}
+                onChange={(e) => setForm({ ...form, driverCode: e.target.value })}
+                placeholder="VD: 1234"
+                className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-sm outline-none focus:ring-2 focus:ring-primary/20"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                Họ tên tài xế
+              </label>
+              <input
+                type="text"
+                value={form.driverName}
+                onChange={(e) => setForm({ ...form, driverName: e.target.value })}
+                placeholder="VD: Nguyễn Văn A"
+                className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-sm outline-none focus:ring-2 focus:ring-primary/20"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                SĐT tài xế
+              </label>
+              <input
+                type="text"
+                value={form.driverPhone}
+                onChange={(e) => setForm({ ...form, driverPhone: e.target.value })}
+                placeholder="VD: 0912345678"
+                className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-sm outline-none focus:ring-2 focus:ring-primary/20"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                Hạn đăng kiểm
+              </label>
+              <input
+                type="date"
+                value={form.inspectionExpiry}
+                onChange={(e) => setForm({ ...form, inspectionExpiry: e.target.value })}
+                className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-sm outline-none focus:ring-2 focus:ring-primary/20"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                Hạn bảo hiểm
+              </label>
+              <input
+                type="date"
+                value={form.insuranceExpiry}
+                onChange={(e) => setForm({ ...form, insuranceExpiry: e.target.value })}
                 className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-sm outline-none focus:ring-2 focus:ring-primary/20"
               />
             </div>

@@ -6,7 +6,7 @@ import api from '@/lib/api'
 import { formatNumber, formatCurrency, formatDateTime } from '@/lib/utils'
 import { toast } from 'sonner'
 import { useState, type ReactNode } from 'react'
-import { ArrowLeft, ChevronRight, FileText, X, Check, AlertTriangle, ArrowRightLeft, Wrench, Shield, Settings, Eye, Pencil } from 'lucide-react'
+import { ArrowLeft, ChevronRight, FileText, X, Check, AlertTriangle, ArrowRightLeft, Wrench, Shield, Settings, Eye, Pencil, Upload, Loader2, Trash2, Undo2 } from 'lucide-react'
 import Link from 'next/link'
 import { useAuthStore } from '@/stores/auth.store'
 
@@ -63,42 +63,77 @@ const JOB_TYPE_CONFIG: Record<string, { label: string; desc: string; color: stri
   INSPECTION:  { label: 'Kiểm tra',           desc: 'Kiểm tra tình trạng xe, không phát sinh sửa chữa', color: 'border-purple-300 bg-purple-50 text-purple-700 dark:bg-purple-900/20 dark:border-purple-700 dark:text-purple-400', icon: <Eye className="w-5 h-5" /> },
 }
 
-const DMS_HINTS: Record<string, string> = {
-  QUOTED:        'Mã báo giá DMS (vd: BG-2025-001)',
-  APPROVED:      'Mã duyệt / lệnh sửa chữa DMS',
-  WAITING_PARTS: 'Mã đặt phụ tùng DMS (vd: PT-2025-001)',
-  IN_PROGRESS:   'Mã lệnh sửa chữa / bảo hành DMS',
-  COMPLETED:     'Mã hoàn công DMS',
-  DELIVERED:     'Mã bàn giao DMS',
-  REJECTED:      'Mã từ chối DMS (nếu có)',
-}
-
 function WorkflowStepper({ currentStatus }: { currentStatus: string }) {
-  const currentIdx = WORKFLOW_STEPS.indexOf(currentStatus)
   const isRejected = currentStatus === 'REJECTED'
-  return (
-    <div className="flex items-center gap-1 flex-wrap">
-      {WORKFLOW_STEPS.map((step, idx) => (
-        <div key={step} className="flex items-center">
-          <div
-            title={statusLabels[step]}
-            className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium border-2 transition-colors ${
-              isRejected && step === 'QUOTED'
-                ? 'bg-danger/10 border-danger text-danger'
-                : idx < currentIdx
-                  ? 'bg-primary border-primary text-white'
-                  : idx === currentIdx
-                    ? 'bg-primary/10 border-primary text-primary'
-                    : 'bg-slate-100 border-slate-300 text-slate-400 dark:bg-slate-700 dark:border-slate-600'
-            }`}
-          >
-            {!isRejected && idx < currentIdx ? <Check className="w-3.5 h-3.5" /> : idx + 1}
-          </div>
-          {idx < WORKFLOW_STEPS.length - 1 && (
-            <div className={`w-4 h-0.5 ${idx < currentIdx && !isRejected ? 'bg-primary' : 'bg-slate-300 dark:bg-slate-600'}`} />
-          )}
+
+  if (isRejected) {
+    return (
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <span className="text-sm font-medium text-danger">Báo giá bị từ chối</span>
+          <span className="text-xs text-slate-400">Cần sửa lại báo giá</span>
         </div>
-      ))}
+        <div className="h-2 rounded-full bg-slate-100 dark:bg-slate-700 overflow-hidden">
+          <div className="h-full rounded-full bg-danger" style={{ width: '30%' }} />
+        </div>
+        <div className="flex items-center gap-2 text-sm">
+          <span className="text-slate-400">Đã báo giá</span>
+          <ChevronRight className="w-3.5 h-3.5 text-slate-300" />
+          <span className="px-2 py-0.5 rounded-full bg-danger/10 text-danger font-medium">Từ chối</span>
+          <ChevronRight className="w-3.5 h-3.5 text-slate-300" />
+          <span className="text-slate-500">Chẩn đoán lại</span>
+        </div>
+      </div>
+    )
+  }
+
+  const currentIdx = WORKFLOW_STEPS.indexOf(currentStatus)
+  const total = WORKFLOW_STEPS.length
+  const pct = currentIdx < 0 ? 0 : Math.round(((currentIdx + 1) / total) * 100)
+  const prev = currentIdx > 0 ? WORKFLOW_STEPS[currentIdx - 1] : null
+  const next = currentIdx < total - 1 ? WORKFLOW_STEPS[currentIdx + 1] : null
+  const isDone = currentIdx === total - 1
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <span className="text-sm font-medium text-slate-700 dark:text-slate-200">
+          Bước {currentIdx + 1}/{total} · {statusLabels[currentStatus]}
+        </span>
+        <span className={`text-sm font-semibold ${isDone ? 'text-success' : 'text-primary'}`}>{pct}%</span>
+      </div>
+
+      <div className="h-2 rounded-full bg-slate-100 dark:bg-slate-700 overflow-hidden">
+        <div
+          className={`h-full rounded-full transition-all duration-500 ${isDone ? 'bg-success' : 'bg-primary'}`}
+          style={{ width: `${pct}%` }}
+        />
+      </div>
+
+      <div className="flex items-center gap-2 text-sm flex-wrap">
+        {prev && (
+          <>
+            <span className="text-slate-400 inline-flex items-center gap-1">
+              <Check className="w-3.5 h-3.5 text-success" />{statusLabels[prev]}
+            </span>
+            <ChevronRight className="w-3.5 h-3.5 text-slate-300 dark:text-slate-600" />
+          </>
+        )}
+        <span className={`px-2 py-0.5 rounded-full font-medium ${isDone ? 'bg-success/10 text-success' : 'bg-primary/10 text-primary'}`}>
+          {statusLabels[currentStatus]}
+        </span>
+        {next && (
+          <>
+            <ChevronRight className="w-3.5 h-3.5 text-slate-300 dark:text-slate-600" />
+            <span className="text-slate-500 dark:text-slate-400">{statusLabels[next]}</span>
+          </>
+        )}
+        {isDone && (
+          <span className="text-success inline-flex items-center gap-1 ml-1">
+            <Check className="w-3.5 h-3.5" />Hoàn tất
+          </span>
+        )}
+      </div>
     </div>
   )
 }
@@ -164,6 +199,9 @@ export default function WorkshopJobDetailPage() {
 
   const [transition, setTransition] = useState<TransitionForm | null>(null)
   const [editingJobType, setEditingJobType] = useState(false)
+  const [dmsInput, setDmsInput] = useState('')
+  const [editingDms, setEditingDms] = useState(false)
+  const [uploading, setUploading] = useState(false)
 
   const jobTypeMutation = useMutation({
     mutationFn: async (jobType: string) => {
@@ -204,6 +242,37 @@ export default function WorkshopJobDetailPage() {
       toast.error(err.response?.data?.message || 'Lỗi cập nhật trạng thái')
     },
   })
+
+  const infoMutation = useMutation({
+    mutationFn: async (payload: { dmsRef?: string; settlementFileId?: string | null }) => {
+      const { data } = await api.patch(`/workshop/jobs/${id}/info`, payload)
+      return data
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['workshop', 'jobs', id] })
+      toast.success('Đã cập nhật thông tin')
+      setEditingDms(false)
+    },
+    onError: (err: any) => {
+      toast.error(err.response?.data?.message || 'Lỗi cập nhật thông tin')
+    },
+  })
+
+  const handleUploadSettlement = async (file: File) => {
+    setUploading(true)
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+      const { data } = await api.post('/files/upload', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      })
+      infoMutation.mutate({ settlementFileId: data.id })
+    } catch {
+      toast.error('Lỗi upload file quyết toán')
+    } finally {
+      setUploading(false)
+    }
+  }
 
   const handleConfirm = () => {
     if (!transition) return
@@ -246,6 +315,8 @@ export default function WorkshopJobDetailPage() {
 
   const nextStatuses = ALLOWED_TRANSITIONS[job.status] || []
   const isRejected = job.status === 'REJECTED'
+  const isAdmin = user ? ['SUPER_ADMIN', 'GIAM_DOC_HAU_MAI'].includes(user.role) : false
+  const dmsLocked = !!job.dmsRef && !isAdmin
 
   return (
     <div className="space-y-6">
@@ -289,34 +360,54 @@ export default function WorkshopJobDetailPage() {
         </div>
 
         <div className="flex flex-wrap gap-2">
-          {nextStatuses.filter(canTransitionTo).map((next) => (
-            <button
-              key={next}
-              onClick={() => {
-                let estimatedCost = ''
-                let note = ''
-                // Auto-fill từ repair orders khi chuyển QUOTED
-                if (next === 'QUOTED' && job.repairOrders?.length > 0) {
-                  const total = job.repairOrders.reduce((sum: number, ro: any) => sum + Number(ro.totalCost || 0), 0)
-                  estimatedCost = String(total)
-                  const roDescriptions = job.repairOrders.map((ro: any) => `${ro.code}: ${ro.description}`).join('; ')
-                  note = `Báo giá: ${total.toLocaleString('vi-VN')}đ — ${roDescriptions}`
-                }
-                setTransition({ targetStatus: next, note, dmsRef: '', estimatedCost })
-              }}
-              disabled={!!transition}
-              className={`flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-lg transition disabled:opacity-40 ${
-                next === 'REJECTED'
-                  ? 'bg-danger hover:bg-danger/90 text-white'
-                  : 'bg-primary hover:bg-primary/90 text-white'
-              }`}
-            >
-              {next === 'REJECTED' ? <X className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-              {next === 'REJECTED' ? 'Từ chối báo giá'
-                : next === 'DIAGNOSING' && isRejected ? 'Sửa lại báo giá'
-                : statusLabels[next]}
-            </button>
-          ))}
+          {nextStatuses.filter(canTransitionTo).map((next) => {
+            // Xác định hướng chuyển: lùi = về bước trước trong quy trình
+            const curIdx = WORKFLOW_STEPS.indexOf(job.status)
+            const nextIdx = WORKFLOW_STEPS.indexOf(next)
+            const isBackward = next !== 'REJECTED' && curIdx >= 0 && nextIdx >= 0 && nextIdx < curIdx
+            const startTransition = () => {
+              let estimatedCost = ''
+              let note = ''
+              // Auto-fill từ repair orders khi chuyển QUOTED
+              if (next === 'QUOTED' && job.repairOrders?.length > 0) {
+                const total = job.repairOrders.reduce((sum: number, ro: any) => sum + Number(ro.totalCost || 0), 0)
+                estimatedCost = String(total)
+                const roDescriptions = job.repairOrders.map((ro: any) => `${ro.code}: ${ro.description}`).join('; ')
+                note = `Báo giá: ${total.toLocaleString('vi-VN')}đ — ${roDescriptions}`
+              }
+              // Quay lại bước trước cần xác nhận để tránh nhầm lẫn
+              if (isBackward) {
+                const ok = window.confirm(
+                  `Quay lại bước "${statusLabels[next]}"?\n\nCông việc đang ở "${statusLabels[job.status]}" sẽ bị đưa ngược lại giai đoạn trước. Bạn có chắc chắn?`,
+                )
+                if (!ok) return
+              }
+              setTransition({ targetStatus: next, note, dmsRef: '', estimatedCost })
+            }
+            const label = next === 'REJECTED' ? 'Từ chối báo giá'
+              : next === 'DIAGNOSING' && isRejected ? 'Sửa lại báo giá'
+              : isBackward ? `Quay lại: ${statusLabels[next]}`
+              : statusLabels[next]
+            return (
+              <button
+                key={next}
+                onClick={startTransition}
+                disabled={!!transition}
+                className={`flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-lg transition disabled:opacity-40 ${
+                  next === 'REJECTED'
+                    ? 'bg-danger hover:bg-danger/90 text-white'
+                    : isBackward
+                      ? 'border border-amber-400 text-amber-700 hover:bg-amber-50 dark:text-amber-300 dark:hover:bg-amber-900/20'
+                      : 'bg-primary hover:bg-primary/90 text-white'
+                }`}
+              >
+                {next === 'REJECTED' ? <X className="w-4 h-4" />
+                  : isBackward ? <Undo2 className="w-4 h-4" />
+                  : <ChevronRight className="w-4 h-4" />}
+                {label}
+              </button>
+            )
+          })}
 
           {nextStatuses.length > 0 && nextStatuses.filter(canTransitionTo).length === 0 && (
             <p className="text-sm text-slate-400 italic">
@@ -381,18 +472,6 @@ export default function WorkshopJobDetailPage() {
                   ? 'Nêu rõ lý do từ chối để xưởng cập nhật lại...'
                   : 'Mô tả công việc đã thực hiện, kết quả kiểm tra...'}
                 className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-sm outline-none focus:ring-2 focus:ring-primary/20 resize-none"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">
-                Mã lệnh DMS <span className="text-slate-400 font-normal">(tuỳ chọn)</span>
-              </label>
-              <input
-                type="text"
-                value={transition.dmsRef}
-                onChange={(e) => setTransition({ ...transition, dmsRef: e.target.value })}
-                placeholder={DMS_HINTS[transition.targetStatus] || 'Mã lệnh DMS'}
-                className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-sm outline-none focus:ring-2 focus:ring-primary/20"
               />
             </div>
             <div className="flex gap-2">
@@ -508,12 +587,6 @@ export default function WorkshopJobDetailPage() {
                 <dd className="font-medium text-primary">{job.plan?.name}</dd>
               </div>
             )}
-            {job.dmsRef && (
-              <div className="flex justify-between">
-                <dt className="text-slate-500 flex items-center gap-1"><FileText className="w-3.5 h-3.5" />Mã DMS</dt>
-                <dd className="font-medium font-mono text-sm bg-slate-100 dark:bg-slate-700 px-2 py-0.5 rounded">{job.dmsRef}</dd>
-              </div>
-            )}
             <div className="flex justify-between">
               <dt className="text-slate-500">Cố vấn dịch vụ</dt>
               <dd className="font-medium">{job.advisor?.fullName}</dd>
@@ -542,6 +615,107 @@ export default function WorkshopJobDetailPage() {
                 <dd className="font-medium text-right">{job.diagnosis}</dd>
               </div>
             )}
+
+            {/* Mã lệnh DMS — nhập 1 lần */}
+            <div className="flex justify-between gap-4 items-start pt-3 border-t border-slate-100 dark:border-slate-700">
+              <dt className="text-slate-500 shrink-0 flex items-center gap-1"><FileText className="w-3.5 h-3.5" />Mã lệnh DMS</dt>
+              <dd className="font-medium text-right flex-1">
+                {!editingDms && job.dmsRef && (
+                  <div className="flex items-center justify-end gap-2">
+                    <span className="font-mono text-sm bg-slate-100 dark:bg-slate-700 px-2 py-0.5 rounded">{job.dmsRef}</span>
+                    {!dmsLocked && (
+                      <button
+                        onClick={() => { setDmsInput(job.dmsRef || ''); setEditingDms(true) }}
+                        className="text-slate-400 hover:text-primary transition"
+                        title="Sửa mã DMS"
+                      >
+                        <Pencil className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
+                )}
+                {!editingDms && !job.dmsRef && (
+                  <button
+                    onClick={() => { setDmsInput(''); setEditingDms(true) }}
+                    className="text-xs text-primary hover:underline"
+                  >
+                    + Nhập mã DMS
+                  </button>
+                )}
+                {editingDms && (
+                  <div className="flex items-center justify-end gap-2">
+                    <input
+                      type="text"
+                      value={dmsInput}
+                      onChange={(e) => setDmsInput(e.target.value)}
+                      placeholder="vd: BG-2025-001"
+                      className="w-40 px-2 py-1 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-sm outline-none focus:ring-2 focus:ring-primary/20"
+                    />
+                    <button
+                      onClick={() => infoMutation.mutate({ dmsRef: dmsInput.trim() })}
+                      disabled={infoMutation.isPending || !dmsInput.trim()}
+                      className="p-1 text-success hover:bg-success/10 rounded transition disabled:opacity-40"
+                      title="Lưu"
+                    >
+                      <Check className="w-4 h-4" />
+                    </button>
+                    <button onClick={() => setEditingDms(false)} className="p-1 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-600 rounded transition">
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                )}
+              </dd>
+            </div>
+
+            {/* File quyết toán */}
+            <div className="flex justify-between gap-4 items-start">
+              <dt className="text-slate-500 shrink-0 flex items-center gap-1"><FileText className="w-3.5 h-3.5" />Quyết toán</dt>
+              <dd className="font-medium text-right flex-1">
+                {job.settlementFile ? (
+                  <div className="flex items-center justify-end gap-2">
+                    <a
+                      href={`${process.env.NEXT_PUBLIC_API_URL}/files/${job.settlementFile.id}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-primary hover:underline text-sm truncate max-w-[180px]"
+                      title={job.settlementFile.originalName}
+                    >
+                      {job.settlementFile.originalName}
+                    </a>
+                    <label className="cursor-pointer text-slate-400 hover:text-primary transition" title="Thay file">
+                      {uploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Pencil className="w-3.5 h-3.5" />}
+                      <input
+                        type="file"
+                        accept="application/pdf,image/*"
+                        className="hidden"
+                        disabled={uploading}
+                        onChange={(e) => { const f = e.target.files?.[0]; if (f) handleUploadSettlement(f); e.target.value = '' }}
+                      />
+                    </label>
+                    <button
+                      onClick={() => infoMutation.mutate({ settlementFileId: null })}
+                      disabled={infoMutation.isPending}
+                      className="text-slate-400 hover:text-danger transition disabled:opacity-40"
+                      title="Gỡ file"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                ) : (
+                  <label className="cursor-pointer inline-flex items-center gap-1.5 text-xs text-primary hover:underline">
+                    {uploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
+                    {uploading ? 'Đang tải lên...' : 'Đính kèm PDF / ảnh'}
+                    <input
+                      type="file"
+                      accept="application/pdf,image/*"
+                      className="hidden"
+                      disabled={uploading}
+                      onChange={(e) => { const f = e.target.files?.[0]; if (f) handleUploadSettlement(f); e.target.value = '' }}
+                    />
+                  </label>
+                )}
+              </dd>
+            </div>
           </dl>
         </div>
 

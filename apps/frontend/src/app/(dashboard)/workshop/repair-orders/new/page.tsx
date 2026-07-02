@@ -66,7 +66,7 @@ function NewRepairOrderForm() {
         ...(form.dmsRef.trim() ? { dmsRef: form.dmsRef.trim() } : {}),
       })
       // 2. Add items
-      const validItems = items.filter((i) => i.description.trim() && i.unitPrice > 0)
+      const validItems = items.filter((i) => i.description.trim() && i.unitPrice >= 0)
       for (const item of validItems) {
         await api.post(`/workshop/repair-orders/${ro.id}/items`, {
           type: item.type,
@@ -92,8 +92,8 @@ function NewRepairOrderForm() {
     if (!form.jobId) { toast.error('Chọn công việc'); return }
     if (!form.odo) { toast.error('Nhập ODO'); return }
     if (!form.description.trim()) { toast.error('Nhập mô tả'); return }
-    const validItems = items.filter((i) => i.description.trim() && i.unitPrice > 0)
-    if (validItems.length === 0) { toast.error('Thêm ít nhất 1 hạng mục có giá tiền'); return }
+    const validItems = items.filter((i) => i.description.trim() && i.unitPrice >= 0)
+    if (validItems.length === 0) { toast.error('Thêm ít nhất 1 hạng mục có mô tả'); return }
     createMutation.mutate()
   }
 

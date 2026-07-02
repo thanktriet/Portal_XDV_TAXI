@@ -161,15 +161,23 @@ export class MaintenanceService {
         }
       }
 
-      if (dueItems.length > 0) {
+      // Chỉ cảnh báo cấp kế tiếp cần làm (mốc nextDueOdo gần nhất phía trước),
+      // không cảnh báo các cấp thấp hơn đã bị vượt qua ("cảnh báo lùi").
+      // Với xe chưa từng bảo dưỡng, mỗi plan độc lập nên vẫn giữ tất cả.
+      const nextDueItems =
+        dueItems.length > 0
+          ? [dueItems.sort((a, b) => a.nextDueOdo - b.nextDueOdo)[0]]
+          : [];
+
+      if (nextDueItems.length > 0) {
         result.push({
           id: vehicle.id,
           licensePlate: vehicle.licensePlate,
           currentOdo: vehicle.currentOdo,
           modelName: vehicle.model.name,
           branchName: vehicle.branch?.name,
-          dueItems,
-          mostUrgent: dueItems.sort((a, b) => a.remaining - b.remaining)[0],
+          dueItems: nextDueItems,
+          mostUrgent: nextDueItems[0],
         });
       }
     }

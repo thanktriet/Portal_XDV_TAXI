@@ -39,17 +39,8 @@ export default function UsersSettingsPage() {
   const { data: roles } = useQuery({
     queryKey: ['roles'],
     queryFn: async () => {
-      // We'll use a simple approach — roles from existing users
-      return [
-        { id: '', code: 'SUPER_ADMIN', name: 'Super Admin' },
-        { id: '', code: 'GIAM_DOC_HAU_MAI', name: 'Giám đốc Hậu mãi' },
-        { id: '', code: 'QUAN_LY_XUONG', name: 'Quản lý Xưởng' },
-        { id: '', code: 'CO_VAN_DICH_VU', name: 'Cố vấn Dịch vụ' },
-        { id: '', code: 'KY_THUAT_VIEN', name: 'Kỹ thuật viên' },
-        { id: '', code: 'QUAN_LY_DOI_XE', name: 'Quản lý Đội xe' },
-        { id: '', code: 'DIEU_HANH', name: 'Điều hành' },
-        { id: '', code: 'TAI_XE', name: 'Tài xế' },
-      ]
+      const { data } = await api.get('/roles')
+      return data
     },
   })
 
@@ -154,11 +145,9 @@ export default function UsersSettingsPage() {
                 required
               >
                 <option value="">Chọn vai trò</option>
-                {usersData?.data?.[0]?.role &&
-                  [...new Map(usersData.data.map((u: any) => [u.role.id, u.role])).values()].map((role: any) => (
-                    <option key={role.id} value={role.id}>{role.name}</option>
-                  ))
-                }
+                {roles?.map((role: any) => (
+                  <option key={role.id} value={role.id}>{role.name}</option>
+                ))}
               </select>
             </div>
             <div>

@@ -3,8 +3,11 @@ import { VehiclesService } from './vehicles.service';
 import { VehicleImportService } from './vehicle-import.service';
 import { VehiclesController } from './vehicles.controller';
 import { VehicleModelsController } from './vehicle-models.controller';
+import { AuditLogsModule } from '../audit-logs/audit-logs.module';
+import { FilesModule } from '../files/files.module';
 
 @Module({
+  imports: [AuditLogsModule, FilesModule],
   controllers: [VehiclesController, VehicleModelsController],
   providers: [VehiclesService, VehicleImportService],
   exports: [VehiclesService],

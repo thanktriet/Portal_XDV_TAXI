@@ -27,29 +27,29 @@ model User {
   branch Branch? @relation("BranchUsers", fields: [branchId], references: [id])
 
   // Relations
-  managedBranches    Branch[]          @relation("BranchManager")
-  vehicleOdoLogs     VehicleOdoLog[]
-  approvedTransfers  VehicleTransfer[] @relation("TransferApprover")
-  advisedJobs        WorkshopJob[]     @relation("JobAdvisor")
-  repairOrders       RepairOrder[]     @relation("ROCreator")
-  partTransactions   PartTransaction[]
-  approvedPartTransfers PartTransfer[] @relation("PartTransferApprover")
-  fleetCosts         FleetCost[]
-  reportedIncidents  FleetIncident[]   @relation("IncidentReporter")
-  notifications      Notification[]
-  pushSubscriptions  PushSubscription[]
-  auditLogs          AuditLog[]
-  uploadedFiles      File[]
-  activityLogs       ActivityLog[]
-  statusChanges      WorkshopJobStatusLog[] @relation("StatusChanger")
-  createdBatches     PartTransferBatch[] @relation("BatchCreator")
-  approvedBatches    PartTransferBatch[] @relation("BatchApprover")
-  requisitionsCreated   PartRequisition[] @relation("RequisitionCreator")
-  requisitionsFleetApproved PartRequisition[] @relation("RequisitionFleetApprover")
-  requisitionsPartsApproved PartRequisition[] @relation("RequisitionPartsApprover")
-  requisitionsApproved  PartRequisition[] @relation("RequisitionApprover")
-  requisitionsDispatched PartRequisition[] @relation("RequisitionDispatcher")
-  requisitionsReceived  PartRequisition[] @relation("RequisitionReceiver")
+  managedBranches           Branch[]               @relation("BranchManager")
+  vehicleOdoLogs            VehicleOdoLog[]
+  approvedTransfers         VehicleTransfer[]      @relation("TransferApprover")
+  advisedJobs               WorkshopJob[]          @relation("JobAdvisor")
+  repairOrders              RepairOrder[]          @relation("ROCreator")
+  partTransactions          PartTransaction[]
+  approvedPartTransfers     PartTransfer[]         @relation("PartTransferApprover")
+  fleetCosts                FleetCost[]
+  reportedIncidents         FleetIncident[]        @relation("IncidentReporter")
+  notifications             Notification[]
+  pushSubscriptions         PushSubscription[]
+  auditLogs                 AuditLog[]
+  uploadedFiles             File[]
+  activityLogs              ActivityLog[]
+  statusChanges             WorkshopJobStatusLog[] @relation("StatusChanger")
+  createdBatches            PartTransferBatch[]    @relation("BatchCreator")
+  approvedBatches           PartTransferBatch[]    @relation("BatchApprover")
+  requisitionsCreated       PartRequisition[]      @relation("RequisitionCreator")
+  requisitionsFleetApproved PartRequisition[]      @relation("RequisitionFleetApprover")
+  requisitionsPartsApproved PartRequisition[]      @relation("RequisitionPartsApprover")
+  requisitionsApproved      PartRequisition[]      @relation("RequisitionApprover")
+  requisitionsDispatched    PartRequisition[]      @relation("RequisitionDispatcher")
+  requisitionsReceived      PartRequisition[]      @relation("RequisitionReceiver")
   fleetReplacementsCreated  FleetPartReplacement[] @relation("FleetReplacementCreator")
   fleetReplacementsApproved FleetPartReplacement[] @relation("FleetReplacementApprover")
   fleetReplacementsReturned FleetPartReplacement[] @relation("FleetReplacementReturnBy")
@@ -58,8 +58,8 @@ model User {
 }
 
 model Role {
-  id          String  @id @default(uuid())
-  code        String  @unique
+  id          String   @id @default(uuid())
+  code        String   @unique
   name        String
   description String?
   createdAt   DateTime @default(now()) @map("created_at")
@@ -111,17 +111,17 @@ model Branch {
   isActive  Boolean    @default(true) @map("is_active")
   createdAt DateTime   @default(now()) @map("created_at")
 
-  manager  User?     @relation("BranchManager", fields: [managerId], references: [id])
-  users    User[]    @relation("BranchUsers")
-  vehicles Vehicle[]
-  workshopJobs   WorkshopJob[]
-  partStocks     PartStock[]
-  partTransactions PartTransaction[]
-  technicians    Technician[]
-  transfersFrom  VehicleTransfer[] @relation("TransferFrom")
-  transfersTo    VehicleTransfer[] @relation("TransferTo")
-  requisitionsFrom PartRequisition[] @relation("RequisitionFrom")
-  requisitionsTo   PartRequisition[] @relation("RequisitionTo")
+  manager           User?                  @relation("BranchManager", fields: [managerId], references: [id])
+  users             User[]                 @relation("BranchUsers")
+  vehicles          Vehicle[]
+  workshopJobs      WorkshopJob[]
+  partStocks        PartStock[]
+  partTransactions  PartTransaction[]
+  technicians       Technician[]
+  transfersFrom     VehicleTransfer[]      @relation("TransferFrom")
+  transfersTo       VehicleTransfer[]      @relation("TransferTo")
+  requisitionsFrom  PartRequisition[]      @relation("RequisitionFrom")
+  requisitionsTo    PartRequisition[]      @relation("RequisitionTo")
   fleetReplacements FleetPartReplacement[] @relation("FleetReplacementBranch")
 
   @@map("branches")
@@ -141,33 +141,40 @@ model VehicleModel {
 }
 
 model Vehicle {
-  id           String        @id @default(uuid())
-  licensePlate String        @unique @map("license_plate")
-  vin          String        @unique
-  modelId      String        @map("model_id")
-  yearMfg      Int           @map("year_mfg")
-  registeredAt DateTime?     @map("registered_at")
-  currentOdo   Int           @default(0) @map("current_odo")
-  status       VehicleStatus @default(ACTIVE)
-  branchId     String        @map("branch_id")
-  driverId     String?       @map("driver_id")
-  createdAt    DateTime      @default(now()) @map("created_at")
-  updatedAt    DateTime      @updatedAt @map("updated_at")
+  id               String        @id @default(uuid())
+  licensePlate     String        @unique @map("license_plate")
+  vin              String        @unique
+  modelId          String        @map("model_id")
+  yearMfg          Int           @map("year_mfg")
+  registeredAt     DateTime?     @map("registered_at")
+  ownerName        String?       @map("owner_name")
+  driverCode       String?       @map("driver_code")
+  driverName       String?       @map("driver_name")
+  driverPhone      String?       @map("driver_phone")
+  inspectionExpiry DateTime?     @map("inspection_expiry")
+  insuranceExpiry  DateTime?     @map("insurance_expiry")
+  currentOdo       Int           @default(0) @map("current_odo")
+  status           VehicleStatus @default(ACTIVE)
+  branchId         String        @map("branch_id")
+  driverId         String?       @map("driver_id")
+  createdAt        DateTime      @default(now()) @map("created_at")
+  updatedAt        DateTime      @updatedAt @map("updated_at")
 
   model  VehicleModel @relation(fields: [modelId], references: [id])
   branch Branch       @relation(fields: [branchId], references: [id])
 
-  odoLogs            VehicleOdoLog[]
-  transferHistory    VehicleTransfer[]
-  workshopJobs       WorkshopJob[]
-  maintenanceRecords MaintenanceRecord[]
-  fleetCosts         FleetCost[]
-  incidents          FleetIncident[]
-  partTransfersFrom  PartTransfer[] @relation("PartTransferFrom")
-  partTransfersTo    PartTransfer[] @relation("PartTransferTo")
-  partTransferLinesFrom PartTransferLine[] @relation("TransferLineFrom")
-  partTransferLinesTo   PartTransferLine[] @relation("TransferLineTo")
+  odoLogs               VehicleOdoLog[]
+  transferHistory       VehicleTransfer[]
+  workshopJobs          WorkshopJob[]
+  maintenanceRecords    MaintenanceRecord[]
+  fleetCosts            FleetCost[]
+  incidents             FleetIncident[]
+  partTransfersFrom     PartTransfer[]         @relation("PartTransferFrom")
+  partTransfersTo       PartTransfer[]         @relation("PartTransferTo")
+  partTransferLinesFrom PartTransferLine[]     @relation("TransferLineFrom")
+  partTransferLinesTo   PartTransferLine[]     @relation("TransferLineTo")
   fleetReplacements     FleetPartReplacement[]
+  documents             VehicleDocument[]
 
   @@index([branchId, status])
   @@map("vehicles")
@@ -181,6 +188,27 @@ enum VehicleStatus {
   DECOMMISSIONED
 }
 
+model VehicleDocument {
+  id        String             @id @default(uuid())
+  vehicleId String             @map("vehicle_id")
+  fileId    String             @map("file_id")
+  category  VehicleDocCategory
+  createdAt DateTime           @default(now()) @map("created_at")
+
+  vehicle Vehicle @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  file    File    @relation("VehicleDoc", fields: [fileId], references: [id])
+
+  @@index([vehicleId])
+  @@map("vehicle_documents")
+}
+
+enum VehicleDocCategory {
+  REGISTRATION
+  INSPECTION
+  INSURANCE
+  OTHER
+}
+
 model VehicleOdoLog {
   id          String   @id @default(uuid())
   vehicleId   String   @map("vehicle_id")
@@ -188,7 +216,7 @@ model VehicleOdoLog {
   previousOdo Int      @map("previous_odo")
   delta       Int
   recordedAt  DateTime @default(now()) @map("recorded_at")
-  source      String?  // manual, gps, workshop
+  source      String? // manual, gps, workshop
   userId      String   @map("user_id")
 
   vehicle Vehicle @relation(fields: [vehicleId], references: [id])
@@ -218,38 +246,40 @@ model VehicleTransfer {
 // ==================== WORKSHOP ====================
 
 model WorkshopJob {
-  id            String            @id @default(uuid())
-  code          String            @unique
-  vehicleId     String            @map("vehicle_id")
-  branchId      String            @map("branch_id")
-  planId        String?           @map("plan_id")
-  dmsRef        String?           @map("dms_ref")
-  odoAtEntry    Int               @map("odo_at_entry")
-  status        WorkshopJobStatus @default(RECEIVED)
-  jobType       WorkshopJobType?  @map("job_type")
-  entryReason   String            @map("entry_reason")
-  diagnosis     String?
-  advisorId     String            @map("advisor_id")
-  technicianId  String?           @map("technician_id")
-  deliveryPersonName    String?  @map("delivery_person_name")
-  deliveryPersonPhone   String?  @map("delivery_person_phone")
-  estimatedCost Decimal?          @map("estimated_cost") @db.Decimal(15, 2)
-  actualCost    Decimal?          @map("actual_cost") @db.Decimal(15, 2)
-  receivedAt    DateTime          @default(now()) @map("received_at")
-  completedAt   DateTime?         @map("completed_at")
-  deliveredAt   DateTime?         @map("delivered_at")
-  createdAt     DateTime          @default(now()) @map("created_at")
-  updatedAt     DateTime          @updatedAt @map("updated_at")
+  id                  String            @id @default(uuid())
+  code                String            @unique
+  vehicleId           String            @map("vehicle_id")
+  branchId            String            @map("branch_id")
+  planId              String?           @map("plan_id")
+  dmsRef              String?           @map("dms_ref")
+  settlementFileId    String?           @map("settlement_file_id")
+  odoAtEntry          Int               @map("odo_at_entry")
+  status              WorkshopJobStatus @default(RECEIVED)
+  jobType             WorkshopJobType?  @map("job_type")
+  entryReason         String            @map("entry_reason")
+  diagnosis           String?
+  advisorId           String            @map("advisor_id")
+  technicianId        String?           @map("technician_id")
+  deliveryPersonName  String?           @map("delivery_person_name")
+  deliveryPersonPhone String?           @map("delivery_person_phone")
+  estimatedCost       Decimal?          @map("estimated_cost") @db.Decimal(15, 2)
+  actualCost          Decimal?          @map("actual_cost") @db.Decimal(15, 2)
+  receivedAt          DateTime          @default(now()) @map("received_at")
+  completedAt         DateTime?         @map("completed_at")
+  deliveredAt         DateTime?         @map("delivered_at")
+  createdAt           DateTime          @default(now()) @map("created_at")
+  updatedAt           DateTime          @updatedAt @map("updated_at")
 
-  vehicle    Vehicle          @relation(fields: [vehicleId], references: [id])
-  branch     Branch           @relation(fields: [branchId], references: [id])
-  advisor    User             @relation("JobAdvisor", fields: [advisorId], references: [id])
-  technician Technician?      @relation(fields: [technicianId], references: [id])
-  plan       MaintenancePlan? @relation(fields: [planId], references: [id])
+  vehicle        Vehicle          @relation(fields: [vehicleId], references: [id])
+  branch         Branch           @relation(fields: [branchId], references: [id])
+  advisor        User             @relation("JobAdvisor", fields: [advisorId], references: [id])
+  technician     Technician?      @relation(fields: [technicianId], references: [id])
+  plan           MaintenancePlan? @relation(fields: [planId], references: [id])
+  settlementFile File?            @relation("JobSettlement", fields: [settlementFileId], references: [id])
 
   repairOrders        RepairOrder[]
   partTransferBatches PartTransferBatch[]
-  statusHistory WorkshopJobStatusLog[]
+  statusHistory       WorkshopJobStatusLog[]
 
   @@index([branchId, status])
   @@index([vehicleId])
@@ -257,10 +287,10 @@ model WorkshopJob {
 }
 
 enum WorkshopJobType {
-  REPAIR          // Sửa chữa tính phí
-  WARRANTY        // Bảo hành
-  MAINTENANCE     // Bảo dưỡng định kỳ
-  INSPECTION      // Kiểm tra
+  REPAIR // Sửa chữa tính phí
+  WARRANTY // Bảo hành
+  MAINTENANCE // Bảo dưỡng định kỳ
+  INSPECTION // Kiểm tra
 }
 
 enum WorkshopJobStatus {
@@ -370,26 +400,26 @@ model PartCategory {
 }
 
 model Part {
-  id         String  @id @default(uuid())
-  code       String  @unique
+  id         String   @id @default(uuid())
+  code       String   @unique
   name       String
-  categoryId String  @map("category_id")
-  unit       String  @default("cái")
-  minStock   Int     @default(0) @map("min_stock")
-  costPrice  Decimal @map("cost_price") @db.Decimal(15, 2)
-  sellPrice  Decimal @map("sell_price") @db.Decimal(15, 2)
+  categoryId String   @map("category_id")
+  unit       String   @default("cái")
+  minStock   Int      @default(0) @map("min_stock")
+  costPrice  Decimal  @map("cost_price") @db.Decimal(15, 2)
+  sellPrice  Decimal  @map("sell_price") @db.Decimal(15, 2)
   supplier   String?
-  isActive   Boolean @default(true) @map("is_active")
+  isActive   Boolean  @default(true) @map("is_active")
   createdAt  DateTime @default(now()) @map("created_at")
   updatedAt  DateTime @updatedAt @map("updated_at")
 
-  category     PartCategory      @relation(fields: [categoryId], references: [id])
-  stocks       PartStock[]
-  transactions PartTransaction[]
-  transfers    PartTransfer[]
-  transferLines PartTransferLine[]
-  roItems      RepairOrderItem[]
-  requisitionLines     PartRequisitionLine[]
+  category              PartCategory               @relation(fields: [categoryId], references: [id])
+  stocks                PartStock[]
+  transactions          PartTransaction[]
+  transfers             PartTransfer[]
+  transferLines         PartTransferLine[]
+  roItems               RepairOrderItem[]
+  requisitionLines      PartRequisitionLine[]
   fleetReplacementItems FleetPartReplacementItem[]
 
   @@map("parts")
@@ -467,18 +497,18 @@ enum PartTransferStatus {
 }
 
 model PartTransferBatch {
-  id              String              @id @default(uuid())
-  code            String              @unique
-  status          PartTransferStatus  @default(PENDING)
-  note            String?
-  jobId           String?             @map("job_id")
-  createdById     String              @map("created_by_id")
-  approvedById    String?             @map("approved_by_id")
-  approvedAt      DateTime?           @map("approved_at")
-  rejectedReason  String?             @map("rejected_reason")
-  reversedFromId  String?             @map("reversed_from_id")
-  createdAt       DateTime            @default(now()) @map("created_at")
-  updatedAt       DateTime            @updatedAt @map("updated_at")
+  id             String             @id @default(uuid())
+  code           String             @unique
+  status         PartTransferStatus @default(PENDING)
+  note           String?
+  jobId          String?            @map("job_id")
+  createdById    String             @map("created_by_id")
+  approvedById   String?            @map("approved_by_id")
+  approvedAt     DateTime?          @map("approved_at")
+  rejectedReason String?            @map("rejected_reason")
+  reversedFromId String?            @map("reversed_from_id")
+  createdAt      DateTime           @default(now()) @map("created_at")
+  updatedAt      DateTime           @updatedAt @map("updated_at")
 
   job          WorkshopJob?        @relation(fields: [jobId], references: [id])
   createdBy    User                @relation("BatchCreator", fields: [createdById], references: [id])
@@ -524,51 +554,51 @@ enum PartRequisitionStatus {
 }
 
 model PartRequisition {
-  id               String                @id @default(uuid())
-  code             String                @unique
-  fromBranchId     String                @map("from_branch_id")
-  toBranchId       String                @map("to_branch_id")
-  status           PartRequisitionStatus @default(DRAFT)
-  note             String?
-  rejectedReason   String?               @map("rejected_reason")
-  rejectedStep     String?               @map("rejected_step")
-  createdById      String                @map("created_by_id")
-  fleetApprovedById  String?             @map("fleet_approved_by_id")
-  fleetApprovedAt    DateTime?           @map("fleet_approved_at")
-  partsApprovedById  String?             @map("parts_approved_by_id")
-  partsApprovedAt    DateTime?           @map("parts_approved_at")
-  approvedById     String?               @map("approved_by_id")
-  approvedAt       DateTime?             @map("approved_at")
-  dispatchedById   String?               @map("dispatched_by_id")
-  dispatchedAt     DateTime?             @map("dispatched_at")
-  dispatchNote     String?               @map("dispatch_note")
-  receivedById     String?               @map("received_by_id")
-  receivedAt       DateTime?             @map("received_at")
-  receiptFileId    String?               @map("receipt_file_id")
-  createdAt        DateTime              @default(now()) @map("created_at")
-  updatedAt        DateTime              @updatedAt @map("updated_at")
+  id                String                @id @default(uuid())
+  code              String                @unique
+  fromBranchId      String                @map("from_branch_id")
+  toBranchId        String                @map("to_branch_id")
+  status            PartRequisitionStatus @default(DRAFT)
+  note              String?
+  rejectedReason    String?               @map("rejected_reason")
+  rejectedStep      String?               @map("rejected_step")
+  createdById       String                @map("created_by_id")
+  fleetApprovedById String?               @map("fleet_approved_by_id")
+  fleetApprovedAt   DateTime?             @map("fleet_approved_at")
+  partsApprovedById String?               @map("parts_approved_by_id")
+  partsApprovedAt   DateTime?             @map("parts_approved_at")
+  approvedById      String?               @map("approved_by_id")
+  approvedAt        DateTime?             @map("approved_at")
+  dispatchedById    String?               @map("dispatched_by_id")
+  dispatchedAt      DateTime?             @map("dispatched_at")
+  dispatchNote      String?               @map("dispatch_note")
+  receivedById      String?               @map("received_by_id")
+  receivedAt        DateTime?             @map("received_at")
+  receiptFileId     String?               @map("receipt_file_id")
+  createdAt         DateTime              @default(now()) @map("created_at")
+  updatedAt         DateTime              @updatedAt @map("updated_at")
 
-  fromBranch       Branch              @relation("RequisitionFrom", fields: [fromBranchId], references: [id])
-  toBranch         Branch              @relation("RequisitionTo", fields: [toBranchId], references: [id])
-  createdBy        User                @relation("RequisitionCreator", fields: [createdById], references: [id])
-  fleetApprovedBy  User?               @relation("RequisitionFleetApprover", fields: [fleetApprovedById], references: [id])
-  partsApprovedBy  User?               @relation("RequisitionPartsApprover", fields: [partsApprovedById], references: [id])
-  approvedBy       User?               @relation("RequisitionApprover", fields: [approvedById], references: [id])
-  dispatchedBy     User?               @relation("RequisitionDispatcher", fields: [dispatchedById], references: [id])
-  receivedBy       User?               @relation("RequisitionReceiver", fields: [receivedById], references: [id])
-  receiptFile      File?               @relation("RequisitionReceipt", fields: [receiptFileId], references: [id])
-  lines            PartRequisitionLine[]
+  fromBranch      Branch                @relation("RequisitionFrom", fields: [fromBranchId], references: [id])
+  toBranch        Branch                @relation("RequisitionTo", fields: [toBranchId], references: [id])
+  createdBy       User                  @relation("RequisitionCreator", fields: [createdById], references: [id])
+  fleetApprovedBy User?                 @relation("RequisitionFleetApprover", fields: [fleetApprovedById], references: [id])
+  partsApprovedBy User?                 @relation("RequisitionPartsApprover", fields: [partsApprovedById], references: [id])
+  approvedBy      User?                 @relation("RequisitionApprover", fields: [approvedById], references: [id])
+  dispatchedBy    User?                 @relation("RequisitionDispatcher", fields: [dispatchedById], references: [id])
+  receivedBy      User?                 @relation("RequisitionReceiver", fields: [receivedById], references: [id])
+  receiptFile     File?                 @relation("RequisitionReceipt", fields: [receiptFileId], references: [id])
+  lines           PartRequisitionLine[]
 
   @@index([fromBranchId, status])
   @@map("part_requisitions")
 }
 
 model PartRequisitionLine {
-  id            String @id @default(uuid())
-  requisitionId String @map("requisition_id")
-  partId        String @map("part_id")
-  requestedQty  Int    @map("requested_qty")
-  approvedQty   Int?   @map("approved_qty")
+  id            String  @id @default(uuid())
+  requisitionId String  @map("requisition_id")
+  partId        String  @map("part_id")
+  requestedQty  Int     @map("requested_qty")
+  approvedQty   Int?    @map("approved_qty")
   note          String?
 
   requisition PartRequisition @relation(fields: [requisitionId], references: [id], onDelete: Cascade)
@@ -604,11 +634,11 @@ model FleetPartReplacement {
   createdAt         DateTime                   @default(now()) @map("created_at")
   updatedAt         DateTime                   @updatedAt @map("updated_at")
 
-  vehicle         Vehicle  @relation(fields: [vehicleId], references: [id])
-  branch          Branch   @relation("FleetReplacementBranch", fields: [branchId], references: [id])
-  createdBy       User     @relation("FleetReplacementCreator", fields: [createdById], references: [id])
-  approvedBy      User?    @relation("FleetReplacementApprover", fields: [approvedById], references: [id])
-  partsReturnedBy User?    @relation("FleetReplacementReturnBy", fields: [partsReturnedById], references: [id])
+  vehicle         Vehicle                    @relation(fields: [vehicleId], references: [id])
+  branch          Branch                     @relation("FleetReplacementBranch", fields: [branchId], references: [id])
+  createdBy       User                       @relation("FleetReplacementCreator", fields: [createdById], references: [id])
+  approvedBy      User?                      @relation("FleetReplacementApprover", fields: [approvedById], references: [id])
+  partsReturnedBy User?                      @relation("FleetReplacementReturnBy", fields: [partsReturnedById], references: [id])
   items           FleetPartReplacementItem[]
 
   @@index([branchId, status])
@@ -617,10 +647,10 @@ model FleetPartReplacement {
 }
 
 model FleetPartReplacementItem {
-  id               String @id @default(uuid())
-  replacementId    String @map("replacement_id")
-  partId           String @map("part_id")
-  quantity         Int    @default(1)
+  id               String  @id @default(uuid())
+  replacementId    String  @map("replacement_id")
+  partId           String  @map("part_id")
+  quantity         Int     @default(1)
   description      String
   oldPartCondition String? @map("old_part_condition")
   oldPartReturned  Boolean @default(false) @map("old_part_returned")
@@ -635,12 +665,12 @@ model FleetPartReplacementItem {
 // ==================== MAINTENANCE ====================
 
 model MaintenancePlan {
-  id          String  @id @default(uuid())
-  name        String  @unique
-  intervalKm  Int     @map("interval_km")
+  id          String   @id @default(uuid())
+  name        String   @unique
+  intervalKm  Int      @map("interval_km")
   description String?
   tasks       String[]
-  isActive    Boolean @default(true) @map("is_active")
+  isActive    Boolean  @default(true) @map("is_active")
 
   records MaintenanceRecord[]
   jobs    WorkshopJob[]
@@ -740,16 +770,16 @@ enum IncidentPriority {
 // ==================== NOTIFICATIONS & AUDIT ====================
 
 model Notification {
-  id        String             @id @default(uuid())
-  userId    String             @map("user_id")
+  id        String                @id @default(uuid())
+  userId    String                @map("user_id")
   type      NotificationType
   title     String
   message   String
   data      Json?
   channels  NotificationChannel[]
-  isRead    Boolean            @default(false) @map("is_read")
-  readAt    DateTime?          @map("read_at")
-  createdAt DateTime           @default(now()) @map("created_at")
+  isRead    Boolean               @default(false) @map("is_read")
+  readAt    DateTime?             @map("read_at")
+  createdAt DateTime              @default(now()) @map("created_at")
 
   user User @relation(fields: [userId], references: [id])
 
@@ -818,9 +848,11 @@ model File {
   incidentId   String?  @map("incident_id")
   createdAt    DateTime @default(now()) @map("created_at")
 
-  user     User           @relation(fields: [userId], references: [id])
-  incident FleetIncident? @relation("IncidentFiles", fields: [incidentId], references: [id])
+  user                User              @relation(fields: [userId], references: [id])
+  incident            FleetIncident?    @relation("IncidentFiles", fields: [incidentId], references: [id])
   requisitionReceipts PartRequisition[] @relation("RequisitionReceipt")
+  jobSettlements      WorkshopJob[]     @relation("JobSettlement")
+  vehicleDocs         VehicleDocument[] @relation("VehicleDoc")
 
   @@map("files")
 }

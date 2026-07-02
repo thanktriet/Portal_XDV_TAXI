@@ -12,6 +12,7 @@ import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { WorkshopJobsService } from './workshop-jobs.service';
 import { CreateWorkshopJobDto } from './dto/create-job.dto';
 import { UpdateJobStatusDto } from './dto/update-job-status.dto';
+import { UpdateJobInfoDto } from './dto/update-job-info.dto';
 import { QueryJobsDto } from './dto/query-jobs.dto';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { PermissionsGuard } from '../../auth/guards/permissions.guard';
@@ -59,6 +60,17 @@ export class WorkshopJobsController {
     @CurrentUser() user: JwtPayload,
   ) {
     return this.jobsService.updateStatus(id, dto, user);
+  }
+
+  @Patch(':id/info')
+  @RequirePermissions('workshop_jobs:update')
+  @ApiOperation({ summary: 'Cập nhật mã DMS / file quyết toán (DMS chỉ nhập 1 lần)' })
+  updateInfo(
+    @Param('id') id: string,
+    @Body() dto: UpdateJobInfoDto,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    return this.jobsService.updateInfo(id, dto, user);
   }
 
   @Patch(':id/job-type')

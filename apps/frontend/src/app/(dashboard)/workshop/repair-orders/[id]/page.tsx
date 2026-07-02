@@ -294,7 +294,7 @@ export default function RepairOrderDetailPage() {
             <div className="flex gap-2 mt-4">
               <button
                 onClick={() => addItemMutation.mutate()}
-                disabled={addItemMutation.isPending || !item.description || !item.unitPrice}
+                disabled={addItemMutation.isPending || !item.description || item.unitPrice === ''}
                 className="px-4 py-1.5 bg-primary text-white text-sm font-medium rounded-lg hover:bg-primary/90 transition disabled:opacity-50"
               >
                 {addItemMutation.isPending ? 'Đang thêm...' : 'Thêm'}

@@ -3,6 +3,7 @@ import {
   Get,
   Post,
   Patch,
+  Delete,
   Param,
   Body,
   Query,
@@ -54,11 +55,45 @@ export class VehiclesController {
     return this.vehiclesService.findAll(query, branchScope);
   }
 
+  @Get('export')
+  @RequirePermissions('vehicles:read')
+  @ApiOperation({ summary: 'Xuất danh sách xe ra Excel' })
+  async exportExcel(
+    @Query() query: QueryVehicleDto,
+    @CurrentUser() user: JwtPayload,
+    @Res() res: Response,
+  ) {
+    const branchScope = ['SUPER_ADMIN', 'GIAM_DOC_HAU_MAI'].includes(user.role)
+      ? null
+      : user.branchId;
+    const buffer = await this.vehiclesService.exportToExcel(query, branchScope);
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', 'attachment; filename=danh-sach-xe.xlsx');
+    res.send(buffer);
+  }
+
   @Get(':id')
   @RequirePermissions('vehicles:read')
   @ApiOperation({ summary: 'Chi tiết xe' })
   findOne(@Param('id') id: string) {
     return this.vehiclesService.findOne(id);
+  }
+
+  @Post(':id/documents')
+  @RequirePermissions('vehicles:update')
+  @ApiOperation({ summary: 'Đính kèm giấy tờ xe (fileId từ /files/upload)' })
+  addDocument(
+    @Param('id') id: string,
+    @Body() body: { fileId: string; category: string },
+  ) {
+    return this.vehiclesService.addDocument(id, body.fileId, body.category);
+  }
+
+  @Delete(':id/documents/:docId')
+  @RequirePermissions('vehicles:update')
+  @ApiOperation({ summary: 'Xoá giấy tờ xe' })
+  removeDocument(@Param('id') id: string, @Param('docId') docId: string) {
+    return this.vehiclesService.removeDocument(id, docId);
   }
 
   @Patch(':id')

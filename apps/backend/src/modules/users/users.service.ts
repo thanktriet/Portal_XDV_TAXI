@@ -1,13 +1,19 @@
 import { Injectable, ConflictException, NotFoundException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../../database/prisma.service';
+import { AuditLogService } from '../audit-logs/audit-log.service';
+import { RequestContextService } from '../../common/context/request-context.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { QueryUserDto } from './dto/query-user.dto';
 
 @Injectable()
 export class UsersService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private auditLogService: AuditLogService,
+    private requestContextService: RequestContextService,
+  ) {}
 
   async create(dto: CreateUserDto) {
     const existing = await this.prisma.user.findUnique({
@@ -87,7 +93,7 @@ export class UsersService {
   }
 
   async update(id: string, dto: UpdateUserDto) {
-    await this.findOne(id);
+    const oldUser = await this.findOne(id);
 
     const data: any = { ...dto };
     if (dto.password) {
@@ -100,6 +106,19 @@ export class UsersService {
       data,
       include: { role: true, branch: true },
       omit: { passwordHash: true },
+    });
+
+    // Audit log for update
+    const ctx = this.requestContextService.getContext();
+    await this.auditLogService.log({
+      userId: ctx.userId,
+      action: 'USER_UPDATED',
+      resource: 'User',
+      resourceId: user.id,
+      oldData: oldUser,
+      newData: user,
+      ipAddress: ctx.ipAddress,
+      userAgent: ctx.userAgent,
     });
 
     return user;

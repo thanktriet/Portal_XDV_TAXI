@@ -11,8 +11,10 @@ import { PartRequisitionsService } from './parts/requisitions/part-requisitions.
 import { PartRequisitionsController } from './parts/requisitions/part-requisitions.controller';
 import { WorkshopDashboardController } from './dashboard/workshop-dashboard.controller';
 import { WorkshopDashboardService } from './dashboard/workshop-dashboard.service';
+import { AuditLogsModule } from '../audit-logs/audit-logs.module';
 
 @Module({
+  imports: [AuditLogsModule],
   controllers: [
     WorkshopJobsController,
     RepairOrdersController,

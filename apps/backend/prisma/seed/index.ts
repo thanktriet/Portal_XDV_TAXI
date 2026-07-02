@@ -40,6 +40,7 @@ async function main() {
     { code: 'KTV_DOI_XE', name: 'KTV Đội xe', description: 'Kỹ thuật viên bảo dưỡng đội taxi' },
     { code: 'DIEU_HANH', name: 'Điều hành', description: 'Xem thông tin đội xe' },
     { code: 'TAI_XE', name: 'Tài xế', description: 'Báo sự cố' },
+    { code: 'NHAN_VIEN_KHO', name: 'Nhân viên Kho Phụ tùng', description: 'Quản lý kho phụ tùng' },
   ];
 
   const createdRoles: any[] = [];
@@ -151,6 +152,22 @@ async function main() {
       where: { roleId_permissionId: { roleId: coVan.id, permissionId: perm.id } },
       update: {},
       create: { roleId: coVan.id, permissionId: perm.id },
+    });
+  }
+
+  // NHAN_VIEN_KHO - parts create/read/update + part transfers
+  const nhanVienKho = createdRoles.find((r) => r.code === 'NHAN_VIEN_KHO');
+  const nhanVienKhoPerms = permissions.filter(
+    (p) =>
+      (p.resource === 'parts' && ['create', 'read', 'update'].includes(p.action)) ||
+      (p.resource === 'part_transfers' && ['create', 'read', 'update'].includes(p.action)) ||
+      (p.resource === 'vehicles' && p.action === 'read'),
+  );
+  for (const perm of nhanVienKhoPerms) {
+    await prisma.rolePermission.upsert({
+      where: { roleId_permissionId: { roleId: nhanVienKho.id, permissionId: perm.id } },
+      update: {},
+      create: { roleId: nhanVienKho.id, permissionId: perm.id },
     });
   }
 
