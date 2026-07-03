@@ -104,27 +104,6 @@ export class VehiclesController {
     return this.vehiclesService.update(id, dto);
   }
 
-  @Post(':id/odo')
-  @RequirePermissions('vehicles:update')
-  @ApiOperation({ summary: 'Ghi nhận ODO mới' })
-  recordOdo(
-    @Param('id') id: string,
-    @Body() dto: RecordOdoDto,
-    @CurrentUser('sub') userId: string,
-  ) {
-    return this.vehiclesService.recordOdo(id, dto, userId);
-  }
-
-  @Get(':id/odo-history')
-  @RequirePermissions('vehicles:read')
-  @ApiOperation({ summary: 'Lịch sử ODO' })
-  getOdoHistory(
-    @Param('id') id: string,
-    @Query('page') page?: number,
-    @Query('limit') limit?: number,
-  ) {
-    return this.vehiclesService.getOdoHistory(id, page, limit);
-  }
 
   @Get('transfers')
   @RequirePermissions('vehicles:read')
@@ -223,5 +202,28 @@ export class VehiclesController {
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     res.setHeader('Content-Disposition', 'attachment; filename=cap-nhat-odo-template.xlsx');
     res.send(buffer);
+  }
+
+  // Route động :id đặt SAU các route tĩnh (import/*) để tránh khớp nhầm
+  @Post(':id/odo')
+  @RequirePermissions('vehicles:update')
+  @ApiOperation({ summary: 'Ghi nhận ODO mới' })
+  recordOdo(
+    @Param('id') id: string,
+    @Body() dto: RecordOdoDto,
+    @CurrentUser('sub') userId: string,
+  ) {
+    return this.vehiclesService.recordOdo(id, dto, userId);
+  }
+
+  @Get(':id/odo-history')
+  @RequirePermissions('vehicles:read')
+  @ApiOperation({ summary: 'Lịch sử ODO' })
+  getOdoHistory(
+    @Param('id') id: string,
+    @Query('page') page?: number,
+    @Query('limit') limit?: number,
+  ) {
+    return this.vehiclesService.getOdoHistory(id, page, limit);
   }
 }

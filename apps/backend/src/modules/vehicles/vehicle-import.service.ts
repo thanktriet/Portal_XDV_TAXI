@@ -16,6 +16,25 @@ interface VehicleRow {
 export class VehicleImportService {
   constructor(private prisma: PrismaService) {}
 
+  // Đọc giá trị ô Excel thành text (xử lý cả ô công thức/rich-text mà ExcelJS trả về object)
+  private cellText(value: any): string {
+    if (value === null || value === undefined) return '';
+    if (typeof value === 'object') {
+      // ô công thức { result } hoặc rich text { richText: [...] } hoặc hyperlink { text }
+      if ('result' in value) return String(value.result ?? '').trim();
+      if ('text' in value) return String(value.text ?? '').trim();
+      if ('richText' in value) return value.richText.map((r: any) => r.text).join('').trim();
+    }
+    return String(value).trim();
+  }
+
+  // Đọc giá trị ô Excel thành số (bỏ dấu phẩy phân cách, xử lý ô công thức)
+  private cellNumber(value: any): number {
+    const text = this.cellText(value).replace(/,/g, '');
+    const n = Number(text);
+    return isNaN(n) ? 0 : n;
+  }
+
   async importFromExcel(buffer: Buffer) {
     const workbook = new ExcelJS.Workbook();
     await workbook.xlsx.load(buffer as any);
@@ -171,9 +190,9 @@ export class VehicleImportService {
     worksheet.eachRow((row, rowNumber) => {
       if (rowNumber === 1) return; // bỏ header
 
-      const vin = String(row.getCell(1).value || '').trim();
-      const licensePlate = String(row.getCell(2).value || '').trim();
-      const odo = Number(row.getCell(3).value) || 0;
+      const vin = this.cellText(row.getCell(1).value);
+      const licensePlate = this.cellText(row.getCell(2).value);
+      const odo = this.cellNumber(row.getCell(3).value);
 
       if (!vin && !licensePlate) return; // bỏ dòng trống
 
