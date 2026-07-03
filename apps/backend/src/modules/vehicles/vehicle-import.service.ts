@@ -44,6 +44,12 @@ export class VehicleImportService {
       if (!yearMfg || yearMfg < 2000) errors.push(`Dòng ${rowNumber}: năm SX không hợp lệ`);
       if (!branchCode) errors.push(`Dòng ${rowNumber}: thiếu mã chi nhánh`);
 
+      // Biển số phải đúng định dạng có dấu chấm, vd: 68A-123.32
+      const PLATE_REGEX = /^\d{2,3}[A-Z]{1,2}-\d{3}\.\d{2}$/;
+      if (licensePlate && !PLATE_REGEX.test(licensePlate)) {
+        errors.push(`Dòng ${rowNumber}: biển số "${licensePlate}" sai định dạng (vd: 68A-123.32, phải có dấu chấm)`);
+      }
+
       rows.push({ licensePlate, vin, modelName, yearMfg, branchCode, currentOdo });
     });
 
@@ -165,18 +171,19 @@ export class VehicleImportService {
     worksheet.eachRow((row, rowNumber) => {
       if (rowNumber === 1) return; // bỏ header
 
-      const licensePlate = String(row.getCell(1).value || '').trim();
-      const vin = String(row.getCell(2).value || '').trim();
+      const vin = String(row.getCell(1).value || '').trim();
+      const licensePlate = String(row.getCell(2).value || '').trim();
       const odo = Number(row.getCell(3).value) || 0;
 
-      if (!licensePlate && !vin) return; // bỏ dòng trống
+      if (!vin && !licensePlate) return; // bỏ dòng trống
 
       if (!odo || odo <= 0) {
         errors.push(`Dòng ${rowNumber}: ODO không hợp lệ`);
         return;
       }
 
-      rows.push({ key: licensePlate || vin, odo, rowNumber });
+      // Ưu tiên khớp theo VIN (chính xác hơn biển số)
+      rows.push({ key: vin || licensePlate, odo, rowNumber });
     });
 
     if (errors.length > 0) {
@@ -242,8 +249,8 @@ export class VehicleImportService {
     const sheet = workbook.addWorksheet('Cập nhật ODO');
 
     sheet.columns = [
-      { header: 'Biển số', key: 'licensePlate', width: 15 },
       { header: 'VIN', key: 'vin', width: 22 },
+      { header: 'Biển số', key: 'licensePlate', width: 15 },
       { header: 'ODO mới', key: 'odo', width: 12 },
     ];
 
@@ -254,7 +261,8 @@ export class VehicleImportService {
       fgColor: { argb: 'FFE2E8F0' },
     };
 
-    sheet.addRow({ licensePlate: '30A-12345', vin: '', odo: 25000 });
+    // Có thể điền VIN (ưu tiên) hoặc biển số
+    sheet.addRow({ vin: 'VF8E34A12345678', licensePlate: '', odo: 25000 });
 
     const buffer = await workbook.xlsx.writeBuffer();
     return Buffer.from(buffer);

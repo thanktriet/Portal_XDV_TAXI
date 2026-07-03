@@ -190,7 +190,7 @@ export default function VehicleImportPage() {
             <Download className="w-5 h-5 text-primary" />
             <div className="flex-1">
               <p className="text-sm font-medium text-slate-900 dark:text-white">Template cập nhật ODO</p>
-              <p className="text-xs text-slate-500">Tải file mẫu với các cột: Biển số, VIN, ODO mới</p>
+              <p className="text-xs text-slate-500">Tải file mẫu với các cột: VIN (ưu tiên), Biển số, ODO mới</p>
             </div>
             <button
               onClick={handleDownloadOdoTemplate}
