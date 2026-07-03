@@ -692,7 +692,12 @@ export default function VehicleDetailPage() {
                       className="flex-1 max-w-xs px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-sm outline-none focus:ring-2 focus:ring-primary/20"
                     />
                     <button
-                      onClick={() => newOdo && odoMutation.mutate(parseInt(newOdo))}
+                      onClick={() => {
+                        const v = parseInt(newOdo, 10)
+                        if (isNaN(v) || v < 0) { toast.error('ODO phải là số nguyên không âm'); return }
+                        if (v <= vehicle.currentOdo) { toast.error(`ODO mới phải lớn hơn ODO hiện tại (${formatNumber(vehicle.currentOdo)} km)`); return }
+                        odoMutation.mutate(v)
+                      }}
                       disabled={odoMutation.isPending}
                       className="px-4 py-2 text-sm bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg transition disabled:opacity-50"
                     >
