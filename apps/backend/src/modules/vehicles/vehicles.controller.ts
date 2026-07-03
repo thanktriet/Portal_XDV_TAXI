@@ -201,4 +201,27 @@ export class VehiclesController {
     res.setHeader('Content-Disposition', 'attachment; filename=import-xe-template.xlsx');
     res.send(buffer);
   }
+
+  @Post('import/odo')
+  @RequirePermissions('vehicles:update')
+  @ApiOperation({ summary: 'Cập nhật ODO hàng loạt từ Excel (không thêm xe mới)' })
+  @ApiConsumes('multipart/form-data')
+  @UseInterceptors(FileInterceptor('file'))
+  importOdo(
+    @UploadedFile() file: Express.Multer.File,
+    @CurrentUser('sub') userId: string,
+  ) {
+    if (!file) throw new Error('Vui lòng chọn file');
+    return this.importService.importOdoFromExcel(file.buffer, userId);
+  }
+
+  @Get('import/odo/template')
+  @RequirePermissions('vehicles:read')
+  @ApiOperation({ summary: 'Tải template cập nhật ODO' })
+  async downloadOdoTemplate(@Res() res: Response) {
+    const buffer = await this.importService.getOdoTemplate();
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', 'attachment; filename=cap-nhat-odo-template.xlsx');
+    res.send(buffer);
+  }
 }

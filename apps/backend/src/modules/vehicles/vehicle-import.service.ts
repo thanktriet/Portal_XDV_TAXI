@@ -149,4 +149,114 @@ export class VehicleImportService {
     const buffer = await workbook.xlsx.writeBuffer();
     return Buffer.from(buffer);
   }
+
+  // Import Excel để CẬP NHẬT ODO cho xe đã tồn tại (không thêm xe mới)
+  async importOdoFromExcel(buffer: Buffer, userId: string) {
+    const workbook = new ExcelJS.Workbook();
+    await workbook.xlsx.load(buffer as any);
+
+    const worksheet = workbook.worksheets[0];
+    if (!worksheet) throw new BadRequestException('File Excel không có sheet nào');
+
+    // Cột: Biển số | VIN | ODO mới
+    const rows: { key: string; odo: number; rowNumber: number }[] = [];
+    const errors: string[] = [];
+
+    worksheet.eachRow((row, rowNumber) => {
+      if (rowNumber === 1) return; // bỏ header
+
+      const licensePlate = String(row.getCell(1).value || '').trim();
+      const vin = String(row.getCell(2).value || '').trim();
+      const odo = Number(row.getCell(3).value) || 0;
+
+      if (!licensePlate && !vin) return; // bỏ dòng trống
+
+      if (!odo || odo <= 0) {
+        errors.push(`Dòng ${rowNumber}: ODO không hợp lệ`);
+        return;
+      }
+
+      rows.push({ key: licensePlate || vin, odo, rowNumber });
+    });
+
+    if (errors.length > 0) {
+      throw new BadRequestException({
+        message: 'File có lỗi dữ liệu',
+        errors: errors.slice(0, 20),
+      });
+    }
+
+    if (rows.length === 0) {
+      throw new BadRequestException('File không có dữ liệu ODO nào');
+    }
+
+    let updated = 0;
+    const skipped: string[] = [];
+
+    for (const row of rows) {
+      const vehicle = await this.prisma.vehicle.findFirst({
+        where: { OR: [{ licensePlate: row.key }, { vin: row.key }] },
+      });
+
+      if (!vehicle) {
+        skipped.push(`${row.key}: không tìm thấy xe`);
+        continue;
+      }
+
+      if (row.odo <= vehicle.currentOdo) {
+        skipped.push(`${row.key}: ODO mới (${row.odo}) không lớn hơn ODO hiện tại (${vehicle.currentOdo})`);
+        continue;
+      }
+
+      const delta = row.odo - vehicle.currentOdo;
+      await this.prisma.$transaction([
+        this.prisma.vehicleOdoLog.create({
+          data: {
+            vehicleId: vehicle.id,
+            odo: row.odo,
+            previousOdo: vehicle.currentOdo,
+            delta,
+            source: 'excel',
+            userId,
+          },
+        }),
+        this.prisma.vehicle.update({
+          where: { id: vehicle.id },
+          data: { currentOdo: row.odo },
+        }),
+      ]);
+
+      updated++;
+    }
+
+    return {
+      total: rows.length,
+      updated,
+      skipped: skipped.length,
+      skippedDetails: skipped,
+    };
+  }
+
+  async getOdoTemplate(): Promise<Buffer> {
+    const workbook = new ExcelJS.Workbook();
+    const sheet = workbook.addWorksheet('Cập nhật ODO');
+
+    sheet.columns = [
+      { header: 'Biển số', key: 'licensePlate', width: 15 },
+      { header: 'VIN', key: 'vin', width: 22 },
+      { header: 'ODO mới', key: 'odo', width: 12 },
+    ];
+
+    sheet.getRow(1).font = { bold: true };
+    sheet.getRow(1).fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FFE2E8F0' },
+    };
+
+    sheet.addRow({ licensePlate: '30A-12345', vin: '', odo: 25000 });
+
+    const buffer = await workbook.xlsx.writeBuffer();
+    return Buffer.from(buffer);
+  }
 }
