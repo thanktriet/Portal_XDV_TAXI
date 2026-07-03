@@ -60,6 +60,7 @@ export const navigation: { section: string; items: NavItem[] }[] = [
     items: [
       { label: 'Fleet', href: '/fleet', icon: Car, roles: ['SUPER_ADMIN', 'GIAM_DOC_HAU_MAI', 'QUAN_LY_DOI_XE', 'DIEU_HANH'] },
       { label: 'Phê duyệt', href: '/fleet/approvals', icon: ClipboardCheck, roles: ['SUPER_ADMIN', 'GIAM_DOC_HAU_MAI', 'QUAN_LY_DOI_XE'] },
+      { label: 'Điều chuyển xe', href: '/fleet/transfers', icon: ArrowRightLeft, roles: ['SUPER_ADMIN', 'GIAM_DOC_HAU_MAI', 'QUAN_LY_DOI_XE'] },
       { label: 'Phụ tùng', href: '/fleet/parts', icon: Package, roles: ['SUPER_ADMIN', 'GIAM_DOC_HAU_MAI', 'QUAN_LY_DOI_XE', 'KTV_DOI_XE'] },
       { label: 'Yêu cầu PT', href: '/fleet/parts/requisitions', icon: PackagePlus, roles: ['SUPER_ADMIN', 'GIAM_DOC_HAU_MAI', 'QUAN_LY_DOI_XE', 'KTV_DOI_XE'] },
       { label: 'Thay thế PT', href: '/fleet/part-replacements', icon: Truck, roles: ['SUPER_ADMIN', 'GIAM_DOC_HAU_MAI', 'QUAN_LY_DOI_XE', 'KTV_DOI_XE'] },

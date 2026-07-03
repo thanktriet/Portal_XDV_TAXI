@@ -95,11 +95,11 @@ module.exports = {
 };
 EOF
 
-# Start or restart PM2
-pm2 delete xdv-backend 2>/dev/null || true
-pm2 delete xdv-frontend 2>/dev/null || true
-pm2 start ecosystem.config.js
-pm2 save
+# Start or restart PM2 (dùng npx pm2 vì pm2 có thể không nằm trong PATH của shell non-interactive)
+npx pm2 delete xdv-backend 2>/dev/null || true
+npx pm2 delete xdv-frontend 2>/dev/null || true
+npx pm2 start ecosystem.config.js
+npx pm2 save
 
 echo ""
 echo "=== Deploy complete! ==="
