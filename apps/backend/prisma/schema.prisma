@@ -30,6 +30,8 @@ model User {
   managedBranches           Branch[]               @relation("BranchManager")
   vehicleOdoLogs            VehicleOdoLog[]
   approvedTransfers         VehicleTransfer[]      @relation("TransferApprover")
+  createdTransfers          VehicleTransfer[]      @relation("TransferCreator")
+  receivedTransfers         VehicleTransfer[]      @relation("TransferReceiver")
   advisedJobs               WorkshopJob[]          @relation("JobAdvisor")
   repairOrders              RepairOrder[]          @relation("ROCreator")
   partTransactions          PartTransaction[]
@@ -226,19 +228,37 @@ model VehicleOdoLog {
   @@map("vehicle_odo_logs")
 }
 
+enum VehicleTransferStatus {
+  PENDING
+  APPROVED
+  RECEIVED
+  REJECTED
+  CANCELLED
+}
+
 model VehicleTransfer {
-  id            String   @id @default(uuid())
-  vehicleId     String   @map("vehicle_id")
-  fromBranchId  String   @map("from_branch_id")
-  toBranchId    String   @map("to_branch_id")
-  reason        String?
-  approvedById  String   @map("approved_by_id")
-  transferredAt DateTime @default(now()) @map("transferred_at")
+  id             String                @id @default(uuid())
+  code           String?               @unique
+  vehicleId      String                @map("vehicle_id")
+  fromBranchId   String                @map("from_branch_id")
+  toBranchId     String                @map("to_branch_id")
+  status         VehicleTransferStatus @default(PENDING)
+  reason         String?
+  rejectedReason String?               @map("rejected_reason")
+  createdById    String?               @map("created_by_id")
+  approvedById   String?               @map("approved_by_id")
+  approvedAt     DateTime?             @map("approved_at")
+  receivedById   String?               @map("received_by_id")
+  receivedAt     DateTime?             @map("received_at")
+  createdAt      DateTime              @default(now()) @map("created_at")
+  transferredAt  DateTime?             @map("transferred_at")
 
   vehicle    Vehicle @relation(fields: [vehicleId], references: [id])
   fromBranch Branch  @relation("TransferFrom", fields: [fromBranchId], references: [id])
   toBranch   Branch  @relation("TransferTo", fields: [toBranchId], references: [id])
-  approvedBy User    @relation("TransferApprover", fields: [approvedById], references: [id])
+  createdBy  User?   @relation("TransferCreator", fields: [createdById], references: [id])
+  approvedBy User?   @relation("TransferApprover", fields: [approvedById], references: [id])
+  receivedBy User?   @relation("TransferReceiver", fields: [receivedById], references: [id])
 
   @@map("vehicle_transfers")
 }

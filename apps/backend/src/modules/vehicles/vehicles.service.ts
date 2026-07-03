@@ -3,9 +3,11 @@ import {
   NotFoundException,
   ConflictException,
   BadRequestException,
+  ForbiddenException,
 } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { PrismaService } from '../../database/prisma.service';
+import { JwtPayload } from '../auth/auth.service';
 import { AuditLogService } from '../audit-logs/audit-log.service';
 import { RequestContextService } from '../../common/context/request-context.service';
 import { CreateVehicleDto } from './dto/create-vehicle.dto';
@@ -297,69 +299,159 @@ export class VehiclesService {
     };
   }
 
-  async transfer(vehicleId: string, dto: TransferVehicleDto, userId: string) {
-    const vehicle = await this.prisma.vehicle.findUnique({
-      where: { id: vehicleId },
-    });
-    if (!vehicle) {
-      throw new NotFoundException('Xe không tồn tại');
-    }
+  // ==== Điều chuyển xe: luồng duyệt 3 bước ====
+
+  private transferInclude = {
+    vehicle: { include: { model: true } },
+    fromBranch: true,
+    toBranch: true,
+    createdBy: { omit: { passwordHash: true } },
+    approvedBy: { omit: { passwordHash: true } },
+    receivedBy: { omit: { passwordHash: true } },
+  };
+
+  // Bước 1: đội đang giữ xe tạo yêu cầu điều chuyển (PENDING)
+  async requestTransfer(vehicleId: string, dto: TransferVehicleDto, userId: string) {
+    const vehicle = await this.prisma.vehicle.findUnique({ where: { id: vehicleId } });
+    if (!vehicle) throw new NotFoundException('Xe không tồn tại');
 
     if (vehicle.branchId === dto.toBranchId) {
-      throw new BadRequestException('Xe đã thuộc chi nhánh này');
+      throw new BadRequestException('Xe đã thuộc đơn vị này');
     }
 
-    const [transfer] = await this.prisma.$transaction([
-      this.prisma.vehicleTransfer.create({
-        data: {
-          vehicleId,
-          fromBranchId: vehicle.branchId,
-          toBranchId: dto.toBranchId,
-          reason: dto.reason,
-          approvedById: userId,
-        },
-      }),
-      this.prisma.vehicle.update({
-        where: { id: vehicleId },
-        data: { branchId: dto.toBranchId },
-      }),
-    ]);
+    // Chặn nếu xe đang có yêu cầu điều chuyển dang dở
+    const pending = await this.prisma.vehicleTransfer.findFirst({
+      where: { vehicleId, status: { in: ['PENDING', 'APPROVED'] } },
+    });
+    if (pending) {
+      throw new BadRequestException('Xe đang có một yêu cầu điều chuyển chưa hoàn tất');
+    }
 
-    // Audit log for vehicle transfer
-    const ctx = this.requestContextService.getContext();
-    await this.auditLogService.log({
-      userId: ctx.userId,
-      action: 'VEHICLE_TRANSFERRED',
-      resource: 'Vehicle',
-      resourceId: vehicleId,
-      newData: {
+    const year = new Date().getFullYear();
+    const count = await this.prisma.vehicleTransfer.count({
+      where: { code: { startsWith: `VT-${year}` } },
+    });
+    const code = `VT-${year}-${String(count + 1).padStart(6, '0')}`;
+
+    const transfer = await this.prisma.vehicleTransfer.create({
+      data: {
+        code,
         vehicleId,
         fromBranchId: vehicle.branchId,
         toBranchId: dto.toBranchId,
         reason: dto.reason,
+        status: 'PENDING',
+        createdById: userId,
       },
+      include: this.transferInclude,
+    });
+
+    this.eventEmitter.emit('vehicle.transfer.requested', { transferId: transfer.id, vehicleId });
+    return transfer;
+  }
+
+  // Bước 2: Quản lý Đội xe / Giám đốc duyệt (APPROVED)
+  async approveTransfer(transferId: string, user: JwtPayload) {
+    const FLEET_ROLES = ['SUPER_ADMIN', 'GIAM_DOC_HAU_MAI', 'QUAN_LY_DOI_XE'];
+    if (!FLEET_ROLES.includes(user.role)) {
+      throw new ForbiddenException('Chỉ Quản lý Đội xe hoặc Giám đốc mới được duyệt điều chuyển');
+    }
+
+    const transfer = await this.prisma.vehicleTransfer.findUnique({ where: { id: transferId } });
+    if (!transfer) throw new NotFoundException('Yêu cầu điều chuyển không tồn tại');
+    if (transfer.status !== 'PENDING') {
+      throw new BadRequestException('Chỉ có thể duyệt yêu cầu đang chờ');
+    }
+
+    return this.prisma.vehicleTransfer.update({
+      where: { id: transferId },
+      data: { status: 'APPROVED', approvedById: user.sub, approvedAt: new Date() },
+      include: this.transferInclude,
+    });
+  }
+
+  // Bước 3: đội nhận xác nhận đã nhận xe (RECEIVED) — xe đổi chi nhánh tại đây
+  async receiveTransfer(transferId: string, user: JwtPayload) {
+    const transfer = await this.prisma.vehicleTransfer.findUnique({ where: { id: transferId } });
+    if (!transfer) throw new NotFoundException('Yêu cầu điều chuyển không tồn tại');
+    if (transfer.status !== 'APPROVED') {
+      throw new BadRequestException('Chỉ xác nhận nhận xe sau khi đã được duyệt');
+    }
+
+    // Chỉ đội nhận (hoặc admin/giám đốc) mới xác nhận nhận xe
+    const HQ_ROLES = ['SUPER_ADMIN', 'GIAM_DOC_HAU_MAI'];
+    if (!HQ_ROLES.includes(user.role) && user.branchId !== transfer.toBranchId) {
+      throw new ForbiddenException('Chỉ đơn vị nhận mới có thể xác nhận đã nhận xe');
+    }
+
+    const now = new Date();
+    const [updated] = await this.prisma.$transaction([
+      this.prisma.vehicleTransfer.update({
+        where: { id: transferId },
+        data: { status: 'RECEIVED', receivedById: user.sub, receivedAt: now, transferredAt: now },
+        include: this.transferInclude,
+      }),
+      this.prisma.vehicle.update({
+        where: { id: transfer.vehicleId },
+        data: { branchId: transfer.toBranchId },
+      }),
+    ]);
+
+    const ctx = this.requestContextService.getContext();
+    await this.auditLogService.log({
+      userId: user.sub,
+      action: 'VEHICLE_TRANSFERRED',
+      resource: 'Vehicle',
+      resourceId: transfer.vehicleId,
+      oldData: { branchId: transfer.fromBranchId },
+      newData: { branchId: transfer.toBranchId, transferId },
       ipAddress: ctx.ipAddress,
       userAgent: ctx.userAgent,
     });
 
     this.eventEmitter.emit('vehicle.transferred', {
-      vehicleId,
-      fromBranchId: vehicle.branchId,
-      toBranchId: dto.toBranchId,
+      vehicleId: transfer.vehicleId,
+      fromBranchId: transfer.fromBranchId,
+      toBranchId: transfer.toBranchId,
     });
 
-    return transfer;
+    return updated;
+  }
+
+  // Từ chối (PENDING hoặc APPROVED → REJECTED)
+  async rejectTransfer(transferId: string, reason: string, user: JwtPayload) {
+    const transfer = await this.prisma.vehicleTransfer.findUnique({ where: { id: transferId } });
+    if (!transfer) throw new NotFoundException('Yêu cầu điều chuyển không tồn tại');
+    if (!['PENDING', 'APPROVED'].includes(transfer.status)) {
+      throw new BadRequestException('Không thể từ chối yêu cầu này');
+    }
+
+    return this.prisma.vehicleTransfer.update({
+      where: { id: transferId },
+      data: { status: 'REJECTED', rejectedReason: reason },
+      include: this.transferInclude,
+    });
+  }
+
+  // Danh sách yêu cầu điều chuyển (cho trang duyệt tập trung)
+  async findTransfers(status?: string, branchId?: string | null) {
+    const where: any = {};
+    if (status) where.status = status;
+    if (branchId) {
+      where.OR = [{ fromBranchId: branchId }, { toBranchId: branchId }];
+    }
+    return this.prisma.vehicleTransfer.findMany({
+      where,
+      orderBy: { createdAt: 'desc' },
+      include: this.transferInclude,
+    });
   }
 
   async getTransferHistory(vehicleId: string) {
     return this.prisma.vehicleTransfer.findMany({
       where: { vehicleId },
-      orderBy: { transferredAt: 'desc' },
-      include: {
-        fromBranch: true,
-        toBranch: true,
-        approvedBy: { omit: { passwordHash: true } },
-      },
+      orderBy: { createdAt: 'desc' },
+      include: this.transferInclude,
     });
   }
 

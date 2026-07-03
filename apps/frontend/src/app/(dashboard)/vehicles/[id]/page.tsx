@@ -10,12 +10,22 @@ import {
   ArrowLeft, Car, MapPin, Gauge, Calendar, Wrench,
   ArrowRightLeft, Plus, Package, AlertTriangle,
   ClipboardList, Hash, FileText, TrendingUp, User,
-  ShieldCheck, Upload, Loader2, Trash2, Download, Pencil, Check,
+  ShieldCheck, Upload, Loader2, Trash2, Download, Pencil, Check, X,
 } from 'lucide-react'
 import Link from 'next/link'
 import { useAuthStore } from '@/stores/auth.store'
 
 const VEHICLE_WRITE_ROLES = ['SUPER_ADMIN', 'GIAM_DOC_HAU_MAI', 'QUAN_LY_XUONG', 'QUAN_LY_DOI_XE']
+const TRANSFER_APPROVE_ROLES = ['SUPER_ADMIN', 'GIAM_DOC_HAU_MAI', 'QUAN_LY_DOI_XE']
+const HQ_ROLES = ['SUPER_ADMIN', 'GIAM_DOC_HAU_MAI']
+
+const transferStatusConfig: Record<string, { label: string; color: string }> = {
+  PENDING:   { label: 'Chờ duyệt',  color: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300' },
+  APPROVED:  { label: 'Đã duyệt',   color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' },
+  RECEIVED:  { label: 'Đã nhận',    color: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300' },
+  REJECTED:  { label: 'Từ chối',    color: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300' },
+  CANCELLED: { label: 'Đã huỷ',     color: 'bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-400' },
+}
 
 const DOC_CATEGORY_LABELS: Record<string, string> = {
   REGISTRATION: 'Đăng ký xe',
@@ -106,6 +116,8 @@ export default function VehicleDetailPage() {
   const [uploadingDoc, setUploadingDoc] = useState(false)
   const [editingDates, setEditingDates] = useState(false)
   const [dateForm, setDateForm] = useState({ inspectionExpiry: '', insuranceExpiry: '', ownerName: '', driverCode: '', driverName: '', driverPhone: '' })
+  const [showTransferForm, setShowTransferForm] = useState(false)
+  const [transferForm, setTransferForm] = useState({ toBranchId: '', reason: '' })
 
   const { data: vehicle, isLoading } = useQuery({
     queryKey: ['vehicles', id],
@@ -119,6 +131,15 @@ export default function VehicleDetailPage() {
     queryKey: ['vehicles', id, 'transfers'],
     queryFn: async () => {
       const { data } = await api.get(`/vehicles/${id}/transfer-history`)
+      return data
+    },
+    enabled: activeTab === 'transfers',
+  })
+
+  const { data: branches } = useQuery({
+    queryKey: ['branches'],
+    queryFn: async () => {
+      const { data } = await api.get('/branches')
       return data
     },
     enabled: activeTab === 'transfers',
@@ -201,6 +222,41 @@ export default function VehicleDetailPage() {
     },
     onError: (err: any) => {
       toast.error(err.response?.data?.message || 'Lỗi xoá giấy tờ')
+    },
+  })
+
+  const transferMutation = useMutation({
+    mutationFn: async (payload: { toBranchId: string; reason?: string }) => {
+      const { data } = await api.post(`/vehicles/${id}/transfers`, payload)
+      return data
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['vehicles', id] })
+      queryClient.invalidateQueries({ queryKey: ['vehicles', id, 'transfers'] })
+      toast.success('Điều chuyển xe thành công')
+      setShowTransferForm(false)
+      setTransferForm({ toBranchId: '', reason: '' })
+    },
+    onError: (err: any) => {
+      toast.error(err.response?.data?.message || 'Lỗi điều chuyển xe')
+    },
+  })
+
+  const transferActionMutation = useMutation({
+    mutationFn: async ({ transferId, action, reason }: { transferId: string; action: 'approve' | 'receive' | 'reject'; reason?: string }) => {
+      const { data } = await api.patch(`/vehicles/transfers/${transferId}/${action}`, action === 'reject' ? { reason } : {})
+      return data
+    },
+    onSuccess: (_data, vars) => {
+      queryClient.invalidateQueries({ queryKey: ['vehicles', id] })
+      queryClient.invalidateQueries({ queryKey: ['vehicles', id, 'transfers'] })
+      const msg = vars.action === 'approve' ? 'Đã duyệt điều chuyển'
+        : vars.action === 'receive' ? 'Đã xác nhận nhận xe'
+        : 'Đã từ chối điều chuyển'
+      toast.success(msg)
+    },
+    onError: (err: any) => {
+      toast.error(err.response?.data?.message || 'Lỗi xử lý điều chuyển')
     },
   })
 
@@ -834,30 +890,139 @@ export default function VehicleDetailPage() {
           {/* ── ĐIỀU CHUYỂN ── */}
           {activeTab === 'transfers' && (
             <div>
-              {transfers?.length > 0 ? (
-                <div className="space-y-3">
-                  {transfers.map((transfer: any, index: number) => (
-                    <div key={transfer.id} className="flex items-center gap-4 p-4 rounded-xl border border-slate-200 dark:border-slate-700">
-                      <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                        <span className="text-xs font-medium text-primary">{transfers.length - index}</span>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="font-medium text-slate-900 dark:text-white">{transfer.fromBranch?.name}</span>
-                          <ArrowRightLeft className="w-4 h-4 text-slate-400 shrink-0" />
-                          <span className="font-medium text-slate-900 dark:text-white">{transfer.toBranch?.name}</span>
+              {canWrite && (
+                <div className="mb-4">
+                  {!showTransferForm ? (
+                    <button
+                      onClick={() => { setTransferForm({ toBranchId: '', reason: '' }); setShowTransferForm(true) }}
+                      className="flex items-center gap-1.5 px-4 py-2 bg-primary hover:bg-primary/90 text-white text-sm font-medium rounded-lg transition"
+                    >
+                      <ArrowRightLeft className="w-4 h-4" /> Điều chuyển xe
+                    </button>
+                  ) : (
+                    <div className="p-4 rounded-xl border border-primary/30 bg-primary/5 dark:bg-primary/10 space-y-3">
+                      <p className="text-sm font-semibold text-slate-800 dark:text-white">
+                        Điều chuyển xe sang đơn vị khác
+                      </p>
+                      <p className="text-xs text-slate-500">
+                        Chi nhánh hiện tại: <span className="font-medium">{vehicle.branch?.name}</span>
+                      </p>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Chuyển đến <span className="text-danger">*</span></label>
+                          <select
+                            value={transferForm.toBranchId}
+                            onChange={(e) => setTransferForm({ ...transferForm, toBranchId: e.target.value })}
+                            className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-sm outline-none focus:ring-2 focus:ring-primary/20"
+                          >
+                            <option value="">-- Chọn đơn vị --</option>
+                            {branches?.filter((b: any) => b.id !== vehicle.branchId).map((b: any) => (
+                              <option key={b.id} value={b.id}>{b.name} ({b.code})</option>
+                            ))}
+                          </select>
                         </div>
-                        {transfer.reason && (
-                          <p className="text-sm text-slate-500 mt-0.5">Lý do: {transfer.reason}</p>
-                        )}
-                        <p className="text-xs text-slate-400 mt-1">Duyệt bởi: {transfer.approvedBy?.fullName}</p>
+                        <div>
+                          <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Lý do</label>
+                          <input
+                            type="text"
+                            value={transferForm.reason}
+                            onChange={(e) => setTransferForm({ ...transferForm, reason: e.target.value })}
+                            placeholder="Tuỳ chọn..."
+                            className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-sm outline-none focus:ring-2 focus:ring-primary/20"
+                          />
+                        </div>
                       </div>
-                      <div className="text-right shrink-0">
-                        <p className="text-sm text-slate-600 dark:text-slate-300">{formatDate(transfer.transferredAt)}</p>
-                        <p className="text-xs text-slate-400">{formatDateTime(transfer.transferredAt).split(' ')[1]}</p>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => {
+                            if (!transferForm.toBranchId) { toast.error('Chọn đơn vị nhận'); return }
+                            transferMutation.mutate({ toBranchId: transferForm.toBranchId, reason: transferForm.reason.trim() || undefined })
+                          }}
+                          disabled={transferMutation.isPending}
+                          className="flex items-center gap-1.5 px-4 py-2 text-sm bg-primary hover:bg-primary/90 text-white rounded-lg font-medium transition disabled:opacity-50"
+                        >
+                          <ArrowRightLeft className="w-4 h-4" />{transferMutation.isPending ? 'Đang chuyển...' : 'Xác nhận điều chuyển'}
+                        </button>
+                        <button
+                          onClick={() => setShowTransferForm(false)}
+                          className="px-4 py-2 text-sm border border-slate-300 dark:border-slate-600 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition"
+                        >
+                          Hủy
+                        </button>
                       </div>
                     </div>
-                  ))}
+                  )}
+                </div>
+              )}
+              {transfers?.length > 0 ? (
+                <div className="space-y-3">
+                  {transfers.map((transfer: any) => {
+                    const st = transferStatusConfig[transfer.status] || transferStatusConfig.PENDING
+                    const canApprove = TRANSFER_APPROVE_ROLES.includes(user?.role || '') && transfer.status === 'PENDING'
+                    const canReject = TRANSFER_APPROVE_ROLES.includes(user?.role || '') && ['PENDING', 'APPROVED'].includes(transfer.status)
+                    const canReceive = transfer.status === 'APPROVED' &&
+                      (HQ_ROLES.includes(user?.role || '') || user?.branchId === transfer.toBranchId)
+                    return (
+                      <div key={transfer.id} className="p-4 rounded-xl border border-slate-200 dark:border-slate-700">
+                        <div className="flex items-start justify-between gap-3 flex-wrap">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap mb-1">
+                              {transfer.code && <span className="text-xs font-mono text-slate-400">{transfer.code}</span>}
+                              <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${st.color}`}>{st.label}</span>
+                            </div>
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="font-medium text-slate-900 dark:text-white">{transfer.fromBranch?.name}</span>
+                              <ArrowRightLeft className="w-4 h-4 text-slate-400 shrink-0" />
+                              <span className="font-medium text-slate-900 dark:text-white">{transfer.toBranch?.name}</span>
+                            </div>
+                            {transfer.reason && <p className="text-sm text-slate-500 mt-0.5">Lý do: {transfer.reason}</p>}
+                            {transfer.rejectedReason && <p className="text-sm text-danger mt-0.5">Từ chối: {transfer.rejectedReason}</p>}
+                            <div className="text-xs text-slate-400 mt-1 space-y-0.5">
+                              <p>Tạo bởi: {transfer.createdBy?.fullName || '—'} · {formatDate(transfer.createdAt)}</p>
+                              {transfer.approvedBy && <p>Duyệt bởi: {transfer.approvedBy.fullName} · {formatDate(transfer.approvedAt)}</p>}
+                              {transfer.receivedBy && <p>Nhận bởi: {transfer.receivedBy.fullName} · {formatDate(transfer.receivedAt)}</p>}
+                            </div>
+                          </div>
+                          {(canApprove || canReject || canReceive) && (
+                            <div className="flex flex-col gap-2 shrink-0">
+                              {canApprove && (
+                                <button
+                                  onClick={() => transferActionMutation.mutate({ transferId: transfer.id, action: 'approve' })}
+                                  disabled={transferActionMutation.isPending}
+                                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs bg-primary hover:bg-primary/90 text-white rounded-lg font-medium transition disabled:opacity-50"
+                                >
+                                  <Check className="w-3.5 h-3.5" /> Duyệt
+                                </button>
+                              )}
+                              {canReceive && (
+                                <button
+                                  onClick={() => transferActionMutation.mutate({ transferId: transfer.id, action: 'receive' })}
+                                  disabled={transferActionMutation.isPending}
+                                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg font-medium transition disabled:opacity-50"
+                                >
+                                  <Check className="w-3.5 h-3.5" /> Đã nhận xe
+                                </button>
+                              )}
+                              {canReject && (
+                                <button
+                                  onClick={() => {
+                                    const reason = window.prompt('Lý do từ chối điều chuyển:')
+                                    if (reason && reason.trim()) {
+                                      transferActionMutation.mutate({ transferId: transfer.id, action: 'reject', reason: reason.trim() })
+                                    }
+                                  }}
+                                  disabled={transferActionMutation.isPending}
+                                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs border border-danger/40 text-danger hover:bg-danger/10 rounded-lg font-medium transition disabled:opacity-50"
+                                >
+                                  <X className="w-3.5 h-3.5" /> Từ chối
+                                </button>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )
+                  })}
                 </div>
               ) : (
                 <div className="text-center py-12 text-slate-400">

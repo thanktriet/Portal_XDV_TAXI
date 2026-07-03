@@ -22,6 +22,7 @@ import { UpdateVehicleDto } from './dto/update-vehicle.dto';
 import { QueryVehicleDto } from './dto/query-vehicle.dto';
 import { RecordOdoDto } from './dto/record-odo.dto';
 import { TransferVehicleDto } from './dto/transfer-vehicle.dto';
+import { RejectTransferDto } from './dto/reject-transfer.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { PermissionsGuard } from '../auth/guards/permissions.guard';
 import { RequirePermissions } from '../auth/decorators/permissions.decorator';
@@ -125,15 +126,53 @@ export class VehiclesController {
     return this.vehiclesService.getOdoHistory(id, page, limit);
   }
 
-  @Post(':id/transfer')
+  @Get('transfers')
+  @RequirePermissions('vehicles:read')
+  @ApiOperation({ summary: 'Danh sách yêu cầu điều chuyển (chờ duyệt/nhận)' })
+  findTransfers(
+    @Query('status') status: string,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    const branchScope = ['SUPER_ADMIN', 'GIAM_DOC_HAU_MAI'].includes(user.role)
+      ? null
+      : user.branchId;
+    return this.vehiclesService.findTransfers(status, branchScope);
+  }
+
+  @Post(':id/transfers')
   @RequirePermissions('vehicles:transfer')
-  @ApiOperation({ summary: 'Điều chuyển xe sang chi nhánh khác' })
-  transfer(
+  @ApiOperation({ summary: 'Tạo yêu cầu điều chuyển xe' })
+  requestTransfer(
     @Param('id') id: string,
     @Body() dto: TransferVehicleDto,
     @CurrentUser('sub') userId: string,
   ) {
-    return this.vehiclesService.transfer(id, dto, userId);
+    return this.vehiclesService.requestTransfer(id, dto, userId);
+  }
+
+  @Patch('transfers/:transferId/approve')
+  @RequirePermissions('vehicles:transfer')
+  @ApiOperation({ summary: 'Duyệt yêu cầu điều chuyển' })
+  approveTransfer(@Param('transferId') transferId: string, @CurrentUser() user: JwtPayload) {
+    return this.vehiclesService.approveTransfer(transferId, user);
+  }
+
+  @Patch('transfers/:transferId/receive')
+  @RequirePermissions('vehicles:transfer')
+  @ApiOperation({ summary: 'Đội nhận xác nhận đã nhận xe' })
+  receiveTransfer(@Param('transferId') transferId: string, @CurrentUser() user: JwtPayload) {
+    return this.vehiclesService.receiveTransfer(transferId, user);
+  }
+
+  @Patch('transfers/:transferId/reject')
+  @RequirePermissions('vehicles:transfer')
+  @ApiOperation({ summary: 'Từ chối yêu cầu điều chuyển' })
+  rejectTransfer(
+    @Param('transferId') transferId: string,
+    @Body() dto: RejectTransferDto,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    return this.vehiclesService.rejectTransfer(transferId, dto.reason, user);
   }
 
   @Get(':id/transfer-history')
